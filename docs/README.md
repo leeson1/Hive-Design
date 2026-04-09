@@ -13,6 +13,7 @@
 ## 2. 建议阅读顺序
 
 1. `00-overview`：项目背景与阅读地图
+   - 先读 `design-principles.md`
 2. `01-foundation`：核心原则与术语
 3. `02-governance`：角色边界与决策路由
 4. `03-state-model`：对象模型与状态机
@@ -28,7 +29,8 @@
 docs/
 ├── README.md
 ├── 00-overview/
-│   └── 00-文档地图.md
+│   ├── 00-文档地图.md
+│   └── design-principles.md
 ├── 01-foundation/
 │   ├── 01-系统愿景与边界.md
 │   ├── 02-核心设计原则.md
@@ -44,13 +46,16 @@ docs/
 │   ├── 01-Project-Charter-规范.md
 │   └── 02-Execution-Plan-规范.md
 ├── 05-execution/
+│   ├── 00-agent-session-protocol.md
 │   ├── 01-任务准入规则.md
 │   ├── 02-Worker-执行边界.md
 │   └── 03-Handoff-记录规范.md
 ├── 06-coordination/
 │   └── 01-文件系统协同规则.md
 ├── 07-reliability/
-│   └── 01-Checkpoint-与恢复机制.md
+│   ├── 01-Checkpoint-与恢复机制.md
+│   ├── 03-evaluation-gates.md
+│   └── 04-failure-recovery-protocol.md
 └── 08-appendix/
     ├── 01-术语表.md
     └── 02-模板索引.md
@@ -62,10 +67,10 @@ docs/
 
 - 对象模型：`03-state-model/`
 - Plan 拆分：`04-planning/`
-- 任务准入 + Worker 边界：`05-execution/`
+- Session 协议 + 任务准入 + Worker 边界：`05-execution/`
 - 决策分流 + Orchestrator 职责：`02-governance/`
 - 文件系统规则：`06-coordination/`
-- Checkpoint 与上下文哲学：`07-reliability/`
+- Checkpoint + Evaluation + Failure Recovery：`07-reliability/`
 
 ## 5. 下一步建议（可选）
 
