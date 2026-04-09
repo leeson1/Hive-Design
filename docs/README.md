@@ -32,7 +32,8 @@ docs/
 ├── 01-foundation/
 │   ├── 01-系统愿景与边界.md
 │   ├── 02-核心设计原则.md
-│   └── 03-v0.2-架构加固摘要.md
+│   ├── 03-v0.2-架构加固摘要.md
+│   └── 04-系统总体思想框架.md
 ├── 02-governance/
 │   ├── 01-角色职责矩阵.md
 │   └── 02-决策分流规则.md
@@ -62,13 +63,14 @@ docs/
 - 对象模型：`03-state-model/`
 - Plan 拆分：`04-planning/`
 - 任务准入 + Worker 边界：`05-execution/`
-- 决策分流 + Drone 职责：`02-governance/`
+- 决策分流 + Orchestrator 职责：`02-governance/`
 - 文件系统规则：`06-coordination/`
 - Checkpoint 与上下文哲学：`07-reliability/`
 
 ## 5. 下一步建议（可选）
 
-- 先定“必须先写完”的 5 个章节：
+- 先定“必须先写完”的 6 个章节：
+  - 系统总体思想框架
   - 核心对象模型
   - 对象状态迁移
   - 任务准入规则
