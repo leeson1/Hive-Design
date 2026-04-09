@@ -1,5 +1,7 @@
 # Hive Design Laws
 
+> 注：工程执行约束以 [engineering-laws.md](./engineering-laws.md) 为准；本文保留为早期原则摘要。
+
 ## Purpose
 
 - 固化 Hive 的工程约束。

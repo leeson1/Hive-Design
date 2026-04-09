@@ -7,6 +7,11 @@
 
 ## Rules
 
+### Terminology Note
+
+- 本文中的 Drone 指运行控制职责。
+- 在当前文档术语中，该职责由 Orchestrator 承担。
+
 ### Failure Types
 
 - Execution failure
@@ -31,24 +36,53 @@
 - Worker 不得静默退出。
 - Worker 不得覆盖已有失败证据。
 
-### Orchestrator Recovery Actions
+### Drone Recovery Actions
 
-- retry
-- reassign worker
-- replan task
-- escalate
+- Retry task
+- Reassign worker
+- Replan task
+- Escalate to Queen
 
 规则：
 
-- Execution failure 优先考虑 retry 或 reassign worker。
-- Design conflict 优先考虑 replan task 或形成 Decision。
-- Requirement conflict 必须 escalate。
+- Execution failure 优先考虑 Retry task 或 Reassign worker。
+- Design conflict 优先考虑 Replan task。
+- Requirement conflict 必须 Escalate to Queen。
 
 ### Failure Visibility Rule
 
 - No hidden failures.
 - 任何超时、被杀、阻塞、验证失败都必须显式落状态。
 - 恢复动作必须可追溯到 Issue、Task 或 AgentRun。
+
+## Protocol Steps
+
+1. 检测到 Failure。
+2. Classify failure。
+3. 写入 Issue record。
+4. Preserve artifacts。
+5. 选择 Retry task / Reassign worker / Replan task / Escalate to Queen。
+6. Update state。
+7. Exit 当前失败上下文。
+
+## Mermaid Diagram
+
+### Failure Recovery Flow
+
+```mermaid
+flowchart TD
+    A["Failure Detected"] --> B["Classify Failure"]
+    B --> C{"Failure Type"}
+    C -- Execution --> D["Retry Task"]
+    C -- Execution --> I["Reassign Worker"]
+    C -- Design --> E["Replan Task"]
+    C -- Requirement --> F["Escalate to Queen"]
+    D --> G["Update State"]
+    I --> G
+    E --> G
+    F --> G
+    G --> H["Exit"]
+```
 
 ## Anti-patterns
 

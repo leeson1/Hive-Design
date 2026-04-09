@@ -12,6 +12,7 @@
 - Worker 不允许直接执行 Task。
 - Worker 必须先完成 Session START。
 - START 未完成前，禁止执行写操作。
+- Worker 不允许跳过 session reconstruction protocol。
 
 ### Session START
 
@@ -19,13 +20,14 @@
 2. Load relevant plan sections
 3. Load latest handoff
 4. Load constraints
-5. Validate environment
-6. Confirm done criteria
+5. Verify repository state
+6. Verify environment
+7. Confirm done criteria
 
 规则：
 
 - 必须确认 Task scope、allowed paths、forbidden paths。
-- 必须确认当前仓库、依赖、命令入口可用。
+- 必须确认当前仓库状态、工作目录、依赖、命令入口可用。
 - 任一步骤缺失时，Session 必须停止并上报阻塞。
 
 ### Session EXECUTION
@@ -33,22 +35,24 @@
 1. Execute only scoped changes
 2. Do not modify unrelated modules
 3. Do not change architecture
-4. Do not introduce new dependencies without approval
+4. Do not introduce new dependencies
+5. Do not redefine requirements
 
 规则：
 
 - 只允许修改 Task scope 内对象。
 - 不得顺手修复未授权问题。
 - 不得修改 Plan、Requirement、全局约束。
+- 如发现必须新增依赖，必须退出并升级。
 
 ### Session VALIDATION
 
 必须执行：
 
-- tests
-- lint
-- build
-- requirements coverage
+- Run tests
+- Run lint
+- Run build
+- Validate requirements coverage
 
 规则：
 
@@ -60,11 +64,12 @@
 
 必须写：
 
-- files modified
-- decisions made
-- deviations from plan
-- assumptions
-- remaining risks
+- Files modified
+- Decisions made
+- Deviations from plan
+- Assumptions
+- Risks
+- Remaining issues
 
 规则：
 
@@ -74,16 +79,40 @@
 
 ### Session EXIT
 
-- 在 Handoff 中写入 Task completion claim：`done` / `failed` / `blocked`
-- 标记本次 session 完成
-- 清理 session context
-- 退出 Worker
+- Mark task complete
+- Write handoff
+- Clear context
+- Exit Worker
 
 规则：
 
-- 此处 completion 仅表示 Worker 执行结束，不等于最终验收通过。
+- 此处 `Mark task complete` 表示写入 completion claim，不等于最终验收通过。
 - Worker 退出前不得保留未落盘状态。
 - Worker 不等待后续人工对话继续执行。
+
+## Protocol Steps
+
+1. 完成 Session START，确认 Task、Plan、Handoff、Constraints、仓库状态、环境、done criteria。
+2. 进入 Session EXECUTION，只执行 scope 内改动。
+3. 完成 Session VALIDATION，收集 tests、lint、build、requirements coverage 证据。
+4. 写入 Session HANDOFF，记录文件、决策、偏差、假设、风险、剩余问题。
+5. 执行 Session EXIT，写入完成声明、清理上下文、退出 Worker。
+
+## Mermaid Diagram
+
+### Worker Session Lifecycle
+
+```mermaid
+flowchart TD
+    A["Start"] --> B["Load Task / Plan / Handoff / Constraints"]
+    B --> C["Verify Repository State"]
+    C --> D["Verify Environment"]
+    D --> E["Execute Scoped Work"]
+    E --> F["Validate"]
+    F --> G["Write Handoff"]
+    G --> H["Mark Complete"]
+    H --> I["Exit"]
+```
 
 ## Anti-patterns
 
