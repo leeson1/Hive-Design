@@ -18,6 +18,20 @@
 4. 识别未决 Issue
 5. 生成下一批可执行任务或恢复动作
 
+## 恢复流程图
+
+```mermaid
+flowchart TD
+    A["读取最新 Checkpoint"] --> B["加载开放状态对象"]
+    B --> C["校验 Phase / Task / AgentRun 一致性"]
+    C --> D{"是否存在失联或超时 AgentRun"}
+    D -- 是 --> E["标记异常并决定替换或回收"]
+    D -- 否 --> F["识别未决 Issue 与待处理 Directive"]
+    E --> F
+    F --> G["生成恢复动作与下一批任务"]
+    G --> H["写回新的 Checkpoint / 状态更新"]
+```
+
 ## 核心目标
 
 系统恢复依赖状态对象，不依赖历史对话上下文。
