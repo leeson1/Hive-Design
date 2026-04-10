@@ -15,6 +15,7 @@
 
 - `Lease`：一次 `AgentRun` 的时效性授权。
 - `Heartbeat`：运行实例仍然活跃的显式信号。
+- `Start SLA`：从 `AgentRun(created)` 到收到启动确认的最长等待窗口。
 - `Heartbeat Missed`：在允许窗口内未收到心跳。
 - `Timed Out`：租约失效且未恢复。
 - `Stale Run`：状态未知、需要回收或核实的运行实例。
@@ -45,15 +46,23 @@
 - 丢失一次心跳只产生 `AgentRunHeartbeatMissed`，不得立即判定任务失败。
 - 超过租约窗口后，必须触发 `AgentRunTimedOut`。
 
+### Start SLA Rule
+
+- `AgentRun(created)` 不得无限停留。
+- 超过 `Start SLA` 仍无启动确认时，必须触发 `AgentRunStartFailed` 或进入 recovery reconciliation。
+- `Task` 在此期间应保持 `dispatching`，不得重复派发。
+
 ## Protocol Steps
 
-1. `TaskDispatched` 时创建 `AgentRun` 与 lease。
-2. 执行器启动成功后写 `AgentRunStarted`。
-3. 运行中持续写 `heartbeat`。
-4. 若心跳超出阈值，写 `AgentRunHeartbeatMissed`。
-5. 若租约到期仍未恢复，写 `AgentRunTimedOut`。
-6. `Orchestrator` 根据策略选择 `retry / reassign / recover / kill`。
-7. 若 run 正常结束，写 `AgentRunExited` 并进入 `HandoffSubmitted` 流。
+1. `DispatchPrepared` 时创建 `AgentRun(created)` 与 lease。
+2. 进入 `Start SLA` 等待窗口。
+3. 执行器启动成功后写 `AgentRunStarted`。
+4. 运行中持续写 `heartbeat`。
+5. 若心跳超出阈值，写 `AgentRunHeartbeatMissed`。
+6. 若租约到期仍未恢复，写 `AgentRunTimedOut`。
+7. 若 `Start SLA` 到期仍无启动确认，写 `AgentRunStartFailed`。
+8. `Orchestrator` 根据策略选择 `retry / reassign / recover / kill`。
+9. 若 run 正常结束，写 `AgentRunExited` 并进入 `HandoffSubmitted` 流。
 
 ## State / Schema
 
@@ -77,23 +86,26 @@ lease:
 
 ```mermaid
 flowchart TD
-    A["Task Dispatched"] --> B["Create AgentRun + Lease"]
-    B --> C["AgentRun Started"]
-    C --> D["Heartbeat Updates"]
-    D --> E{"Heartbeat Missed?"}
-    E -- No --> D
-    E -- Yes --> F["Emit AgentRunHeartbeatMissed"]
-    F --> G{"Lease Expired?"}
-    G -- No --> D
-    G -- Yes --> H["Emit AgentRunTimedOut"]
-    H --> I["Recovery / Reassign / Kill"]
-    D --> J["AgentRun Exited"]
-    J --> K["Handoff Submitted"]
+    A["Dispatch Prepared"] --> B["Create AgentRun + Lease"]
+    B --> C{"Start Ack within SLA?"}
+    C -- No --> X["Emit AgentRunStartFailed"]
+    C -- Yes --> D["AgentRun Started"]
+    D --> E["Heartbeat Updates"]
+    E --> F{"Heartbeat Missed?"}
+    F -- No --> E
+    F -- Yes --> G["Emit AgentRunHeartbeatMissed"]
+    G --> H{"Lease Expired?"}
+    H -- No --> E
+    H -- Yes --> I["Emit AgentRunTimedOut"]
+    I --> J["Recovery / Reassign / Kill"]
+    E --> K["AgentRun Exited"]
+    K --> L["Handoff Submitted"]
 ```
 
 ## Anti-patterns
 
 - 不建 lease，靠人工猜测 run 是否还活着。
+- `AgentRun(created)` 长时间悬空却不做启动失败处理。
 - 心跳丢失后静默等待，不触发恢复。
 - 把 `AgentRunTimedOut` 直接写成 `Task completed`。
 - 运行状态只存于终端输出，不写结构化字段。

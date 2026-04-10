@@ -82,3 +82,4 @@ flowchart TD
 - 图中必须能看出需求输入、任务派发、结果回写、状态更新、冲突升级。
 
 > Hive 连续性来自外部状态，不是来自 agent context。
+> 更细的运行时模块边界见 `02-Reference-Architecture.md`。

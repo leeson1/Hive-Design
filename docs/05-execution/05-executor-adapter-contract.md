@@ -10,6 +10,7 @@
 
 - 本文定义抽象契约，不定义某个执行器的具体实现。
 - 执行器是外部可替换组件，不是 Hive 内核。
+- 具体能力对比见 `09-Executor-Capability-Matrix.md`。
 
 ## Definitions
 
@@ -56,6 +57,7 @@
 - Hive 不能假设所有执行器支持相同并发模型。
 - Hive 不能假设所有执行器都能恢复旧 session。
 - 适配器必须把原生退出状态归一为 Hive 标准状态。
+- 适配器不得向调度层宣称未被文档或实验验证过的能力。
 
 ### Exit Status Normalization
 

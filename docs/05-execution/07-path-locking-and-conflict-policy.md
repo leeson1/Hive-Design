@@ -10,6 +10,7 @@
 
 - 本文覆盖调度前冲突检测与锁语义。
 - 不覆盖底层锁实现细节。
+- 具体锁对象、lease、stale lock 与 recovery hold 见 `10-Lock-Manager-and-Stale-Lock-Recovery.md`。
 
 ## Definitions
 

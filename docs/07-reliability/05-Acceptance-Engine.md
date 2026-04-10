@@ -10,6 +10,7 @@
 
 - 本文覆盖 Task 级验收。
 - Phase gate 仍由 `Evaluation Gates` 与本章结果共同约束。
+- 更完整的状态枚举见 `../08-appendix/10-State-Transition-Tables.md`。
 
 ## Definitions
 

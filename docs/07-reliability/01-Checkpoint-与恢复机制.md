@@ -16,6 +16,8 @@
 - 下一步动作
 - 活跃 Directive 摘要
 - 在途 Task / AgentRun 摘要
+- 活跃 Lock / Recovery Hold 摘要
+- 最近 Event Log offset / cursor
 
 ### Recovery Protocol
 
@@ -44,6 +46,7 @@ flowchart TD
 - Orchestrator 可以周期性结束当前上下文并重新拉起控制回合。
 - 新控制回合只依赖 Checkpoint、开放状态对象、最近的 Handoff / Acceptance 摘要。
 - 禁止把长对话历史作为唯一恢复来源。
+- Checkpoint 是恢复快照，不是当前事实源。
 
 ## Anti-patterns
 

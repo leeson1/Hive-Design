@@ -83,8 +83,10 @@ transition_effect:
 | `PlanRevised` | Orchestrator | Planning Layer / State Store | 创建 Plan Revision |
 | `TaskCreated` | Plan Compiler | Orchestrator / State Store | 生成 `Task` |
 | `TaskQualified` | Orchestrator | Scheduler | `Task.draft -> ready` |
-| `TaskDispatched` | Orchestrator | Executor Adapter / State Store | `Task.ready -> dispatched`，创建 `AgentRun` |
-| `AgentRunStarted` | Executor Adapter | Orchestrator / State Store | `AgentRun.created -> running` |
+| `DispatchPrepared` | Orchestrator | Executor Adapter / Lock Manager / State Store | `Task.ready -> dispatching`，创建 `AgentRun(created)`，预留锁 |
+| `TaskDispatched` | Orchestrator | Executor Adapter / State Store | `Task.dispatching -> dispatched` |
+| `AgentRunStarted` | Executor Adapter | Orchestrator / State Store | `AgentRun.starting -> running` |
+| `AgentRunStartFailed` | Executor Adapter / Recovery | Orchestrator / State Store | `AgentRun.created / starting -> start_failed` |
 | `AgentRunHeartbeatMissed` | Lease Monitor | Orchestrator | 标记 heartbeat 风险 |
 | `AgentRunTimedOut` | Lease Monitor | Orchestrator / Recovery | `AgentRun.running -> timed_out` |
 | `AgentRunKilled` | Orchestrator / Adapter | State Store / Recovery | `AgentRun.running -> killed` |
@@ -92,8 +94,14 @@ transition_effect:
 | `HandoffSubmitted` | Worker / Adapter | Orchestrator / Acceptance Engine | `Task.dispatched -> awaiting_acceptance` |
 | `AcceptancePassed` | Acceptance Engine | Orchestrator / State Store | `Task.awaiting_acceptance -> accepted` |
 | `AcceptanceRejected` | Acceptance Engine | Orchestrator / Recovery | `Task.awaiting_acceptance -> requeued / blocked` |
+| `AcceptanceNeedsFollowup` | Acceptance Engine | Orchestrator / Recovery | 生成 followup action |
+| `AcceptancePartiallyAccepted` | Acceptance Engine | Orchestrator / Recovery | 记录 partial accept 与后续动作 |
 | `IssueOpened` | Worker / Orchestrator / Acceptance | Orchestrator / Queen | 创建或更新 `Issue` |
 | `IssueEscalated` | Orchestrator | Queen / Decision Layer | 触发裁决流 |
+| `LockAcquired` | Lock Manager | Orchestrator / Scheduler / State Store | `Lock.requested/reserved -> reserved/active` |
+| `LockConflictDetected` | Lock Manager | Orchestrator / Scheduler | 任务进入 blocked 或等待 |
+| `LockRecoveryHeld` | Recovery Coordinator / Lock Manager | Orchestrator / Recovery | `Lock.active -> recovery_hold` |
+| `LockReleased` | Lock Manager / Recovery | Orchestrator / State Store | `Lock.active/recovery_hold -> released` |
 | `CheckpointWritten` | Orchestrator | Recovery Layer / State Store | 更新恢复基线 |
 | `ContextResetRequested` | Orchestrator / Policy | Orchestrator / Recovery | 触发控制回合结束与重建 |
 | `RecoveryStarted` | Orchestrator | Recovery Layer | 进入恢复流程 |
@@ -107,6 +115,7 @@ transition_effect:
 4. 若事件合法，则执行状态迁移或生成派生事件。
 5. 若事件非法或重复，则记录审计结果，不得静默丢弃。
 6. 对会影响恢复基线的事件，必须在适当时机触发 `CheckpointWritten`。
+7. 具体 change-set 顺序与失败补偿见 `../06-coordination/02-Consistency-and-Transaction-Boundaries.md`。
 
 ## Mermaid Diagram
 

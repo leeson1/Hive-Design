@@ -75,8 +75,26 @@ workspace_ref: workspaces/run_codex_003
 lease:
   lease_expires_at: 2026-04-10T12:30:00Z
   last_heartbeat_at: 2026-04-10T12:05:00Z
+start_sla_expires_at: 2026-04-10T12:02:00Z
 exit_status: null
 handoff_ref: null
+```
+
+## Lock
+
+```yaml
+lock_id: lock_auth_write_07
+scope_type: path
+mode: write
+owner_task_id: task_auth_backend_07
+owner_run_id: run_codex_003
+resource_ref:
+  repo: hive-service
+  path_pattern: services/auth/**
+status: active
+lease_expires_at: 2026-04-10T12:30:00Z
+last_renewed_at: 2026-04-10T12:05:00Z
+recovery_hold_until: null
 ```
 
 ## Handoff
@@ -128,9 +146,11 @@ checkpoint_id: cp_20260410_01
 created_at: 2026-04-10T12:40:00Z
 plan_revision_id: plan_rev_12
 active_phase_id: phase_auth
+event_log_cursor: evt_784
 open_task_ids:
   - task_auth_backend_07
 active_run_ids: []
+active_lock_ids: []
 open_issue_ids:
   - issue_auth_timeout_01
 ```

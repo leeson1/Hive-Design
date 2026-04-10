@@ -10,6 +10,8 @@
 
 - 本文只描述控制回路协议，不描述具体执行器内部行为。
 - Orchestrator 不读源码、不执行 Task、不直接修改架构。
+- 组件拆分见 `../00-overview/02-Reference-Architecture.md`。
+- 一致性顺序见 `../06-coordination/02-Consistency-and-Transaction-Boundaries.md`。
 
 ## Definitions
 
