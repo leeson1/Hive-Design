@@ -1,6 +1,6 @@
-# Hive 设计文档总纲（Reference Architecture Draft v0.3）
+# Hive 设计文档总纲（Implementation Contract Draft v0.4）
 
-> 目标：把 Hive 从“协议级工程设计规范”继续收敛为“控制平面参考架构草案”。
+> 目标：把 Hive 从“控制平面参考架构草案”继续收敛为“实现接口草案”，减少实现前的命名歧义、接口歧义与一致性歧义。
 
 ## 1. 文档使用方式
 
@@ -20,12 +20,12 @@
    - 再读 `00-文档地图.md`
 2. `01-foundation`：系统定位、原则、总体思想框架
 3. `02-governance`：角色边界、决策路由、Orchestrator 运行模型
-4. `03-state-model`：核心对象、状态迁移、事件模型、Plan Revision、Task Graph
+4. `03-state-model`：核心对象、状态迁移、事件模型、Plan Revision、Task Graph、canonical enums / identifiers
 5. `04-planning`：Research Sprint、Evidence Pack、Brief / Charter / Execution Plan 编译链
-6. `05-execution`：Session、Task、Worker、AgentRun、执行器适配、能力矩阵、工作区、锁、Handoff 契约
-7. `06-coordination`：状态对象、目录语义、存储分层、一致性边界与事务边界
-8. `07-reliability`：Checkpoint、Evaluation、Failure Recovery、Acceptance、Reconcile Loop、Runtime Directive、Recovery Checklist、端到端场景
-9. `08-appendix`：模板、schema 草案、事件示例、状态迁移总表
+6. `05-execution`：Session、Task、Worker、AgentRun、执行器适配、能力矩阵、API contract、工作区、锁、Handoff 契约、执行器验证计划
+7. `06-coordination`：状态对象、目录语义、存储分层、一致性边界、事务边界、change-set / outbox contract
+8. `07-reliability`：Checkpoint、Evaluation、Failure Recovery、Acceptance、Reconcile Loop、Runtime Directive、Recovery Checklist、端到端场景、不变量、MVP 控制平面
+9. `08-appendix`：模板、schema catalog、命令示例、change-set 示例、事件示例、状态迁移总表
 
 ## 3. 目录结构
 
@@ -52,7 +52,8 @@ docs/
 │   ├── 02-对象状态迁移.md
 │   ├── 03-event-model.md
 │   ├── 04-plan-versioning-and-supersession.md
-│   └── 05-task-graph-model.md
+│   ├── 05-task-graph-model.md
+│   └── 06-Canonical-Enums-and-Identifiers.md
 ├── 04-planning/
 │   ├── 01-Project-Charter-规范.md
 │   ├── 02-Execution-Plan-规范.md
@@ -71,10 +72,13 @@ docs/
 │   ├── 07-path-locking-and-conflict-policy.md
 │   ├── 08-handoff-artifact-contract.md
 │   ├── 09-Executor-Capability-Matrix.md
-│   └── 10-Lock-Manager-and-Stale-Lock-Recovery.md
+│   ├── 10-Lock-Manager-and-Stale-Lock-Recovery.md
+│   ├── 11-Control-Plane-API-Contract.md
+│   └── 12-Executor-Validation-Plan.md
 ├── 06-coordination/
 │   ├── 01-文件系统协同规则.md
-│   └── 02-Consistency-and-Transaction-Boundaries.md
+│   ├── 02-Consistency-and-Transaction-Boundaries.md
+│   └── 03-Change-Set-and-Outbox-Contract.md
 ├── 07-reliability/
 │   ├── 01-Checkpoint-与恢复机制.md
 │   ├── 02-Evaluation-Gates.md
@@ -84,7 +88,9 @@ docs/
 │   ├── 06-Orchestrator-Reconcile-Loop.md
 │   ├── 07-Runtime-Directive-Handling.md
 │   ├── 08-Recovery-Reconciliation-Checklist.md
-│   └── 09-End-to-End-Sequence-Scenarios.md
+│   ├── 09-End-to-End-Sequence-Scenarios.md
+│   ├── 10-Invariants-and-Conformance-Rules.md
+│   └── 11-Minimum-Viable-Control-Plane.md
 └── 08-appendix/
     ├── 01-术语表.md
     ├── 02-模板索引.md
@@ -95,7 +101,9 @@ docs/
     ├── 07-Acceptance-模板.md
     ├── 08-对象-Schema-草案.md
     ├── 09-事件示例.md
-    └── 10-State-Transition-Tables.md
+    ├── 10-State-Transition-Tables.md
+    ├── 11-Schema-Catalog.md
+    └── 12-Command-and-ChangeSet-Examples.md
 ```
 
 ## 4. 阅读分层说明
@@ -127,6 +135,8 @@ docs/
 - Worker 是可丢弃执行单元，不是事实来源。
 - Task、AgentRun、Handoff、Acceptance、Checkpoint 必须分离建模。
 - Event Log、Object State、Checkpoint 已有明确层级：当前事实、历史、恢复快照。
+- canonical enums、event names、field names、ID prefixes 已集中到单一 registry。
+- change-set / outbox 已收敛为控制平面的核心持久化协议。
 - 项目连续性来自外部状态，不来自超长上下文。
 
 ## 6. 路径兼容说明

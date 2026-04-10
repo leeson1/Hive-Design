@@ -9,6 +9,7 @@
 
 - 以下 schema 是 v1 最小建议，不是最终数据库设计。
 - 字段可扩展，但核心语义不应漂移。
+- canonical schema catalog 以 `./11-Schema-Catalog.md` 为准，本文保留为快速示例。
 
 ## Directive
 
@@ -117,10 +118,10 @@ remaining_issues:
 ## Acceptance
 
 ```yaml
-acceptance_id: acc_001
+acceptance_id: acceptance_001
 task_id: task_auth_backend_07
 handoff_id: handoff_003
-result: needs-followup
+status: needs_followup
 reason: integration evidence missing
 followup_actions:
   - create_task_auth_integration_09
@@ -142,7 +143,7 @@ suggested_actions:
 ## Checkpoint
 
 ```yaml
-checkpoint_id: cp_20260410_01
+checkpoint_id: checkpoint_20260410_01
 created_at: 2026-04-10T12:40:00Z
 plan_revision_id: plan_rev_12
 active_phase_id: phase_auth

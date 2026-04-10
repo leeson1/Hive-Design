@@ -10,6 +10,7 @@
 
 - 本文描述控制平面的推荐一致性策略。
 - 本文不绑定某个具体数据库，但要求实现方能提供等价语义。
+- 具体 change-set 结构与示例见 `./03-Change-Set-and-Outbox-Contract.md`。
 
 ## Definitions
 

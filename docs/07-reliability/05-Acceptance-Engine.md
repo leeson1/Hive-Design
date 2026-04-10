@@ -10,6 +10,7 @@
 
 - 本文覆盖 Task 级验收。
 - Phase gate 仍由 `Evaluation Gates` 与本章结果共同约束。
+- canonical 枚举、ID 前缀与字段命名以 `../03-state-model/06-Canonical-Enums-and-Identifiers.md` 为准。
 - 更完整的状态枚举见 `../08-appendix/10-State-Transition-Tables.md`。
 
 ## Definitions
@@ -40,40 +41,40 @@
 
 ### Acceptance Outcomes
 
-- `pass`
-- `reject`
-- `needs-followup`
-- `partial-accept`
+- `accepted`
+- `rejected`
+- `needs_followup`
+- `partial_accepted`
 
 ### Evidence Rule
 
 - 没有证据的完成声明不得通过验收。
-- 证据缺失时，默认 `reject` 或 `needs-followup`。
-- partial handoff 只允许进入 `partial-accept` 或 `needs-followup`。
+- 证据缺失时，默认 `rejected` 或 `needs_followup`。
+- partial handoff 只允许进入 `partial_accepted` 或 `needs_followup`。
 
 ## Protocol Steps
 
 1. 收集 `Acceptance Input Set`。
 2. 核对 `done criteria` 与 `validation method`。
 3. 检查证据完整性。
-4. 归类验收结果为 `pass / reject / needs-followup / partial-accept`。
+4. 归类验收结果为 `accepted / rejected / needs_followup / partial_accepted`。
 5. 回写 `Acceptance Record`。
 6. 触发 `Task`、`Phase`、`Plan` 的后续状态变化。
 
 ## State / Schema
 
 ```yaml
-acceptance_id: acc_20260410_01
+acceptance_id: acceptance_20260410_01
 task_id: task_auth_backend_07
 handoff_id: handoff_20260410_03
 input_set:
   artifacts:
     - artifact_logs_003
     - artifact_test_003
-result: needs-followup
+status: needs_followup
 evidence_summary:
-  code_validation: pass
-  test_validation: fail
+  code_validation: passed
+  test_validation: failed
   requirement_validation: partial
   integration_validation: missing
 reason: integration evidence missing
@@ -111,4 +112,4 @@ flowchart TD
 
 - 任一 Task 的完成都能找到 `Acceptance Record`。
 - 任一验收结果都能回到证据集合。
-- 任一 `partial-accept` 或 `needs-followup` 都会生成明确后续动作。
+- 任一 `partial_accepted` 或 `needs_followup` 都会生成明确后续动作。

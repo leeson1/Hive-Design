@@ -10,6 +10,7 @@
 
 - 本文只定义运行时事件，不定义最终存储实现。
 - 事件用于驱动状态推进，不替代对象状态本身。
+- canonical 事件名、ID 前缀与字段命名以 `./06-Canonical-Enums-and-Identifiers.md` 为准。
 
 ## Definitions
 
@@ -85,7 +86,12 @@ transition_effect:
 | `TaskQualified` | Orchestrator | Scheduler | `Task.draft -> ready` |
 | `DispatchPrepared` | Orchestrator | Executor Adapter / Lock Manager / State Store | `Task.ready -> dispatching`，创建 `AgentRun(created)`，预留锁 |
 | `TaskDispatched` | Orchestrator | Executor Adapter / State Store | `Task.dispatching -> dispatched` |
+| `TaskRequeued` | Orchestrator / Recovery | Scheduler / State Store | `Task.dispatching / awaiting_acceptance -> requeued` |
+| `TaskBlocked` | Orchestrator / Recovery / Lock Manager | Scheduler / State Store | `Task.ready / dispatching -> blocked` |
+| `TaskSuperseded` | Orchestrator | Scheduler / State Store | `Task.ready / blocked / requeued -> superseded` |
+| `TaskCancelled` | Orchestrator | Scheduler / State Store | `Task.ready / blocked / requeued -> cancelled` |
 | `AgentRunStarted` | Executor Adapter | Orchestrator / State Store | `AgentRun.starting -> running` |
+| `AgentRunHeartbeatReported` | Executor Adapter / Host Wrapper | Lease Monitor / State Store | 刷新 `last_heartbeat_at` 与 lease |
 | `AgentRunStartFailed` | Executor Adapter / Recovery | Orchestrator / State Store | `AgentRun.created / starting -> start_failed` |
 | `AgentRunHeartbeatMissed` | Lease Monitor | Orchestrator | 标记 heartbeat 风险 |
 | `AgentRunTimedOut` | Lease Monitor | Orchestrator / Recovery | `AgentRun.running -> timed_out` |

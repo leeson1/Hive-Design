@@ -10,6 +10,7 @@
 
 - 本文是架构假设矩阵，不是产品宣传页。
 - 本文只记录当前可用公开资料与明确 unknown。
+- 具体验证计划见 `./12-Executor-Validation-Plan.md`。
 
 ## Definitions
 

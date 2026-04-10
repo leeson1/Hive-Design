@@ -23,7 +23,7 @@
 - Validation Refs:
 
 ## Result
-- pass / reject / needs-followup / partial-accept
+- accepted / rejected / needs_followup / partial_accepted
 
 ## Evidence Summary
 - code validation:
