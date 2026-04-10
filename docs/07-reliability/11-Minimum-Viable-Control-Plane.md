@@ -2,7 +2,7 @@
 
 ## Purpose
 
-- 定义从 v0.4 文档到 first implementation 的最小切片。
+- 定义首个 Hive 控制平面原型仓的最小切片。
 - 限制首版实现范围，避免一上来做全功能系统。
 - 明确“先实现什么，不实现什么”。
 
@@ -10,6 +10,11 @@
 
 - 本文定义 MVP slice，不定义最终架构上限。
 - MVP 必须仍然保持核心控制平面语义成立。
+- 具体实现蓝图见 `../00-overview/03-MVP-Implementation-Blueprint.md`。
+- 具体对象收敛见 `../03-state-model/07-MVP-Object-Package.md`。
+- 具体黄金路径与失败场景见 `./09-End-to-End-Sequence-Scenarios.md`。
+- 具体分阶段开工顺序见 `../00-overview/04-Phased-Implementation-Plan.md`。
+- 具体存储、执行器、worker、测试策略见本阶段新增蓝图文档。
 
 ## MVP Included
 
@@ -108,6 +113,16 @@ flowchart TD
 - MVP 不是最终能力上限。
 - MVP 的目标是验证：state / event / change-set / acceptance / recovery 这五条主链是否可稳定协同。
 - 只要这五条主链成立，后续再扩多 executor、多 repo、多 writer 才有意义。
+- 首版推荐的实现收敛为：
+  - repo / module layout：`../00-overview/03-MVP-Implementation-Blueprint.md`
+  - mvp object package：`../03-state-model/07-MVP-Object-Package.md`
+  - storage profile：`../06-coordination/04-MVP-Storage-Backend-Profile.md`
+  - first executor：`../05-execution/13-First-Executor-Profile.md`
+  - command handlers：`../05-execution/14-Command-Handler-Blueprint.md`
+  - golden path / failure path：`./09-End-to-End-Sequence-Scenarios.md`
+  - phased implementation plan：`../00-overview/04-Phased-Implementation-Plan.md`
+  - runtime workers：`./12-Reconcile-Worker-and-Event-Processor-Blueprint.md`
+  - conformance gate：`./13-Conformance-Test-Strategy.md`
 
 ## Anti-patterns
 

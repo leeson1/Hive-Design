@@ -10,6 +10,7 @@
 
 - 本文覆盖控制平面的一致性、调度、锁、验收、恢复相关 invariants。
 - 具体对象 schema 与 command contract 以对应章节为准。
+- 具体测试与 fixture 计划见 `./13-Conformance-Test-Strategy.md`。
 
 ## Rules
 

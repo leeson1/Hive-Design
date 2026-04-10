@@ -11,6 +11,7 @@
 - 本文定义逻辑 contract，不绑定数据库实现。
 - canonical 字段和 enum 以 `../03-state-model/06-Canonical-Enums-and-Identifiers.md` 为准。
 - ChangeSet、Event 与对象字段的 canonical schema 以 `../08-appendix/11-Schema-Catalog.md` 为准。
+- MVP 的具体 backend 落地建议见 `./04-MVP-Storage-Backend-Profile.md`。
 
 ## Definitions
 

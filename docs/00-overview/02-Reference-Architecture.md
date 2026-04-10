@@ -10,6 +10,9 @@
 
 - 本文描述 Hive 控制平面的运行时组件与交互关系。
 - 本文不定义业务代码实现，不替代对象协议、执行协议和恢复协议。
+- 首个实现仓的目录与模块蓝图见 `./03-MVP-Implementation-Blueprint.md`。
+- 首版对象包与 referential integrity 收敛见 `../03-state-model/07-MVP-Object-Package.md`。
+- 工程开工顺序见 `./04-Phased-Implementation-Plan.md`。
 
 ## Definitions
 

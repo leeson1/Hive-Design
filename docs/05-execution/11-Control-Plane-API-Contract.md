@@ -10,7 +10,10 @@
 
 - 本文定义 command contract，不绑定 HTTP / gRPC / CLI 传输层。
 - 所有 command 的枚举、事件名与标识符需服从 `../03-state-model/06-Canonical-Enums-and-Identifiers.md`。
+- 首版 command 读写对象最小集见 `../03-state-model/07-MVP-Object-Package.md`。
 - command carrier、ChangeSet 与对象字段的 canonical schema 以 `../08-appendix/11-Schema-Catalog.md` 为准。
+- 具体 handler ownership 与 sync / async 执行方式见 `./14-Command-Handler-Blueprint.md`。
+- 端到端命令收敛场景见 `../07-reliability/09-End-to-End-Sequence-Scenarios.md`。
 
 ## Definitions
 
