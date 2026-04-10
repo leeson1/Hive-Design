@@ -16,7 +16,7 @@
    - 先读 `engineering-laws.md`
    - 再读 `01-Hive-Overall-Architecture.md`
 2. `01-foundation`：核心原则与术语
-3. `02-governance`：角色边界与决策路由
+3. `02-governance`：角色边界、决策路由与 Drone 运行模型
 4. `03-state-model`：对象模型与状态机
 5. `04-planning`：计划体系（Charter / Execution Plan）
 6. `05-execution`：任务准入、执行与交接
@@ -41,7 +41,8 @@ docs/
 │   └── 04-系统总体思想框架.md
 ├── 02-governance/
 │   ├── 01-角色职责矩阵.md
-│   └── 02-决策分流规则.md
+│   ├── 02-决策分流规则.md
+│   └── 03-Drone-Operating-Model.md
 ├── 03-state-model/
 │   ├── 01-核心对象模型.md
 │   └── 02-对象状态迁移.md
@@ -76,7 +77,8 @@ docs/
 - 对象模型：`03-state-model/`
 - Plan 拆分：`04-planning/`
 - Session 协议 + 任务准入 + Worker 边界：`05-execution/`
-- 决策分流 + Orchestrator 职责：`02-governance/`
+- 决策分流 + Drone 运行模型：`02-governance/`
+- Drone 属于调度层，不属于执行层。
 - 文件系统规则：`06-coordination/`
 - Checkpoint + Evaluation + Failure Recovery + Incremental Progress：`07-reliability/`
 
