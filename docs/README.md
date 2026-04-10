@@ -1,30 +1,32 @@
-# Hive 设计文档总纲（Draft v0.1）
+# Hive 设计文档总纲（Protocol Draft v0.2）
 
-> 目标：先建立“像一本书”的文档骨架，后续可持续增量完善。
+> 目标：把 Hive 从“原则级架构说明”收敛为“协议级工程设计规范”。
 
 ## 1. 文档使用方式
 
-- `docs/` 作为 Hive 设计文档主目录。
-- 采用“总纲 + 分卷 + 章节”结构：
-  - 总纲负责导航与阅读顺序；
-  - 分卷负责主题边界；
-  - 章节负责可执行细节与约束。
+- `docs/` 是 Hive 的主设计文档目录。
+- 文档分为三层：
+  - 原则层：系统定位、工程法则、角色边界
+  - 协议层：对象、事件、计划编译、执行、恢复、验收、调度
+  - 模板层：schema、模板、事件示例
+- 阅读时优先看协议层，原则层用于理解边界，模板层用于落地实现。
 
 ## 2. 建议阅读顺序
 
-1. `00-overview`：项目背景与阅读地图
+1. `00-overview`：文档地图、总体架构、工程法则
    - 先读 `engineering-laws.md`
    - 再读 `01-Hive-Overall-Architecture.md`
-2. `01-foundation`：核心原则与术语
-3. `02-governance`：角色边界、决策路由与 Drone 运行模型
-4. `03-state-model`：对象模型与状态机
-5. `04-planning`：计划体系（Charter / Execution Plan）
-6. `05-execution`：任务准入、执行与交接
-7. `06-coordination`：文件系统协同约束
-8. `07-reliability`：检查点、恢复与可持续运行
-9. `08-appendix`：模板、示例与未来扩展
+   - 再读 `00-文档地图.md`
+2. `01-foundation`：系统定位、原则、总体思想框架
+3. `02-governance`：角色边界、决策路由、Orchestrator 运行模型
+4. `03-state-model`：核心对象、状态迁移、事件模型、Plan Revision、Task Graph
+5. `04-planning`：Research Sprint、Evidence Pack、Brief / Charter / Execution Plan 编译链
+6. `05-execution`：Session、Task、Worker、AgentRun、执行器适配、工作区与路径锁、Handoff 契约
+7. `06-coordination`：状态对象、目录语义、存储分层与协同纪律
+8. `07-reliability`：Checkpoint、Evaluation、Failure Recovery、Acceptance、Reconcile Loop、Runtime Directive、Recovery Checklist
+9. `08-appendix`：模板、schema 草案、跨对象事件示例
 
-## 3. 目录结构（初版）
+## 3. 目录结构
 
 ```text
 docs/
@@ -45,50 +47,81 @@ docs/
 │   └── 03-Drone-Operating-Model.md
 ├── 03-state-model/
 │   ├── 01-核心对象模型.md
-│   └── 02-对象状态迁移.md
+│   ├── 02-对象状态迁移.md
+│   ├── 03-event-model.md
+│   ├── 04-plan-versioning-and-supersession.md
+│   └── 05-task-graph-model.md
 ├── 04-planning/
 │   ├── 01-Project-Charter-规范.md
-│   └── 02-Execution-Plan-规范.md
+│   ├── 02-Execution-Plan-规范.md
+│   ├── 03-research-sprint-spec.md
+│   ├── 04-evidence-pack-spec.md
+│   ├── 05-plan-compilation-protocol.md
+│   └── 06-task-graph-compilation.md
 ├── 05-execution/
 │   ├── 00-Agent-Session-Protocol.md
 │   ├── 01-任务准入规则.md
 │   ├── 02-Worker-执行边界.md
-│   └── 03-Handoff-记录规范.md
+│   ├── 03-Handoff-记录规范.md
+│   ├── 04-agentrun-lease-heartbeat-protocol.md
+│   ├── 05-executor-adapter-contract.md
+│   ├── 06-workspace-isolation-model.md
+│   ├── 07-path-locking-and-conflict-policy.md
+│   └── 08-handoff-artifact-contract.md
 ├── 06-coordination/
 │   └── 01-文件系统协同规则.md
 ├── 07-reliability/
 │   ├── 01-Checkpoint-与恢复机制.md
 │   ├── 02-Evaluation-Gates.md
 │   ├── 03-Failure-Recovery-Protocol.md
-│   └── 04-Incremental-Progress-Discipline.md
+│   ├── 04-Incremental-Progress-Discipline.md
+│   ├── 05-Acceptance-Engine.md
+│   ├── 06-Orchestrator-Reconcile-Loop.md
+│   ├── 07-Runtime-Directive-Handling.md
+│   └── 08-Recovery-Reconciliation-Checklist.md
 └── 08-appendix/
     ├── 01-术语表.md
     ├── 02-模板索引.md
     ├── 03-Task-Spec-模板.md
     ├── 04-Handoff-模板.md
     ├── 05-Issue-Record-模板.md
-    └── 06-Checkpoint-模板.md
+    ├── 06-Checkpoint-模板.md
+    ├── 07-Acceptance-模板.md
+    ├── 08-对象-Schema-草案.md
+    └── 09-事件示例.md
 ```
 
-## 4. 与 v0.2 Amendment 的关系
+## 4. 阅读分层说明
 
-本骨架已将你提供的《Hive Architecture Amendments (v0.2 Design Reinforcement)》映射到章节中：
+### 原则层
 
-- 对象模型：`03-state-model/`
-- Plan 拆分：`04-planning/`
-- Session 协议 + 任务准入 + Worker 边界：`05-execution/`
-- 决策分流 + Drone 运行模型：`02-governance/`
-- Drone 属于调度层，不属于执行层。
-- 文件系统规则：`06-coordination/`
-- Checkpoint + Evaluation + Failure Recovery + Incremental Progress：`07-reliability/`
+- `00-overview/`
+- `01-foundation/`
+- `02-governance/01-角色职责矩阵.md`
+- `02-governance/02-决策分流规则.md`
 
-## 5. 下一步建议（可选）
+### 协议层
 
-- 先定“必须先写完”的 6 个章节：
-  - 系统总体思想框架
-  - 核心对象模型
-  - 对象状态迁移
-  - 任务准入规则
-  - 决策分流规则
-  - 文件系统协同规则
-- 每章统一采用：目的、输入、规则、反例、验收标准 五段式模板。
+- `02-governance/03-Drone-Operating-Model.md`
+- `03-state-model/`
+- `04-planning/`
+- `05-execution/`
+- `06-coordination/`
+- `07-reliability/`
+
+### 模板层
+
+- `08-appendix/`
+
+## 5. 当前文档重点
+
+- Hive 是控制平面，不是通用 agent。
+- Orchestrator 是事件驱动状态机，不是长驻大模型会话。
+- Worker 是可丢弃执行单元，不是事实来源。
+- Task、AgentRun、Handoff、Acceptance、Checkpoint 必须分离建模。
+- 项目连续性来自外部状态，不来自超长上下文。
+
+## 6. 路径兼容说明
+
+- `02-governance/03-Drone-Operating-Model.md` 保留旧文件名以保持路径连续性。
+- 该文件正文已统一使用 `Orchestrator`，`Drone` 仅作为历史命名保留在路径层。

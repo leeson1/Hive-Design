@@ -12,7 +12,7 @@
 ```mermaid
 flowchart TD
     Q["Queen\n需求方向 / 关键裁决"]
-    D["Drone\n调度 / 状态推进 / 决策分流"]
+    D["Orchestrator\n调度 / 状态推进 / 决策分流"]
     KB["Hive Knowledge Base\n外部状态 / 共享知识"]
 
     I["Idea"]
@@ -55,16 +55,13 @@ flowchart TD
     W2 -->|阻塞 / 异常| ISS
     W3 -->|阻塞 / 异常| ISS
 
-    W1 -->|阶段快照| CP
-    W2 -->|阶段快照| CP
-    W3 -->|阶段快照| CP
-
     H --> KB
     ISS --> KB
-    CP --> KB
 
     D -->|生成 / 更新| DEC
+    D -->|写入| CP
     DEC --> KB
+    CP --> KB
     KB -->|反馈状态| D
     D -->|Requirement conflict 升级| Q
 ```
@@ -72,11 +69,12 @@ flowchart TD
 ## Rules
 
 - Queen 提供需求与关键决策。
-- Drone 负责调度、状态推进、决策分流。
+- Orchestrator 负责调度、状态推进、决策分流。
 - Worker Bees 执行具体 Task。
 - Hive Knowledge Base 承载外部状态与共享知识。
-- Worker 完成后必须写回 Handoff、Issue、Checkpoint。
-- Drone 根据结果更新状态并决定下一步。
+- Worker 完成后必须写回 Handoff、Issue 与 Artifact。
+- Orchestrator 基于运行结果写出 Checkpoint。
+- Orchestrator 根据结果更新状态并决定下一步。
 
 ## Acceptance Criteria
 

@@ -22,14 +22,20 @@ Worker 必须：
 - Preserve artifacts
 - Suggest retry strategy
 
-### Drone Recovery Actions
+### Orchestrator Recovery Actions
 
-Drone 可执行：
+Orchestrator 可执行：
 
 - Retry
 - Reassign
 - Replan
 - Escalate
+
+规则：
+
+- `Execution failure` 优先 `retry / reassign`
+- `Design conflict` 优先 `replan` 或升级决策层
+- `Requirement conflict` 必须升级到 Queen 或用户确认
 
 ### No Hidden Failures Rule
 

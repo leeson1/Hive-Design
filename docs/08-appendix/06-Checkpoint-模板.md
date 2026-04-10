@@ -11,21 +11,38 @@
 # Checkpoint
 
 ## State Snapshot
-- 
+-
+
+## Active Directive
+-
+
+## Current Plan Revision
+-
+
+## Active AgentRuns
+-
 
 ## Completed Tasks
-- 
+-
 
 ## Open Tasks
-- 
+-
+
+## Open Issues
+-
+
+## Pending Decisions
+-
 
 ## Blockers
-- 
+-
 ```
 
 ## Checklist
 
 - State Snapshot 够恢复
+- Active Directive 清晰
+- Active AgentRuns 清晰
 - Completed Tasks 清晰
 - Open Tasks 清晰
 - Blockers 明确

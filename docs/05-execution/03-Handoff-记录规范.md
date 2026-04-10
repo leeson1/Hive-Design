@@ -11,6 +11,7 @@
 
 - Handoff 是 Worker 退出前提交给 Orchestrator 的结构化交接包。
 - Handoff 不是最终项目真相。
+- 详细字段契约见 `08-handoff-artifact-contract.md`。
 
 ### Submission Flow
 
@@ -63,6 +64,7 @@ sequenceDiagram
 - 判断任务进入 Accepted、Requeued、Blocked 或 Cancelled
 - 必要时生成新的 Task、Issue 或 Decision
 - 更新 Task、AgentRun、Checkpoint 等相关状态
+- 详细验收协议见 `../07-reliability/05-Acceptance-Engine.md`
 
 ## Anti-patterns
 

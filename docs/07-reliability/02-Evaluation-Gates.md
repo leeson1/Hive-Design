@@ -21,7 +21,7 @@
 
 ### Phase Gate Rule
 
-Drone 不得推进 Phase，除非同时满足：
+Orchestrator 不得推进 Phase，除非同时满足：
 
 - Task 完成
 - Evaluation 通过

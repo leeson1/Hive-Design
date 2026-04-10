@@ -14,20 +14,25 @@
 
 ### Required Outputs Per Task
 
-Worker 必须为每个 Task 生成：
+每个 Task 必须生成：
 
-- Checkpoint
 - Handoff
 - Artifact state
+- Checkpoint input
+
+规则：
+
+- Worker 必须留下足够的进度摘要，使 Orchestrator 能写出 Checkpoint。
+- 正式 `Checkpoint` 由 Orchestrator 汇总落盘。
 
 ## Protocol Steps
 
 1. 启动 Task。
 2. 执行 Small Scoped Change。
 3. 完成 Validation。
-4. 写入 Checkpoint。
-5. 写入 Handoff。
-6. 更新 Artifact state。
+4. 写入 Handoff。
+5. 更新 Artifact state。
+6. Orchestrator 汇总写入 Checkpoint。
 7. 进入 Next Task。
 
 ## Mermaid Diagram
@@ -38,9 +43,9 @@ Worker 必须为每个 Task 生成：
 flowchart TD
     A["Task Start"] --> B["Small Scoped Change"]
     B --> C["Validation"]
-    C --> D["Checkpoint"]
-    D --> E["Handoff"]
-    E --> F["Artifact State"]
+    C --> D["Handoff"]
+    D --> E["Artifact State"]
+    E --> F["Orchestrator Checkpoint"]
     F --> G["Next Task"]
 ```
 
@@ -51,5 +56,5 @@ flowchart TD
 
 ## Acceptance Criteria
 
-- 每个 Task 都必须留下 Checkpoint、Handoff、Artifact state。
+- 每个 Task 都必须留下 Handoff、Artifact state 与 Checkpoint 输入。
 - 大范围未跟踪变更不得进入后续流程。
