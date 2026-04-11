@@ -11,6 +11,7 @@
 - 本文描述控制平面的推荐一致性策略。
 - 本文不绑定某个具体数据库，但要求实现方能提供等价语义。
 - 具体 change-set 结构与示例见 `./03-Change-Set-and-Outbox-Contract.md`。
+- 运行时 context reset 恢复见 `../07-reliability/09-Context-Reset-and-Session-Continuity.md`。
 
 ## Definitions
 
@@ -39,6 +40,25 @@
   - lock state delta
 - 外部副作用必须在 change-set durable 之后触发。
 - 若当前实现仅有文件系统，应以“journaled change-set + append-only event files + deterministic apply order”近似该边界。
+
+### Atomic vs Eventual Consistency Rule
+
+以下更新必须原子化落在同一 change-set：
+
+- `Directive` 与其 impact analysis 结论
+- `PlanRevision` 与新建 `Task(draft)` / supersession mapping
+- `Task.ready -> dispatching` 与 `DispatchIntent.prepared`、`AgentRun.created`、`Lock.reserved`
+- `AgentRun.running` 与 `Task.dispatched`、`Lock.active`
+- `Handoff.submitted` 与 `Task.awaiting_acceptance`
+- `Acceptance` 结论与 `Task` 结论、`LockReleased`、followup `Task / Issue`
+- `Checkpoint` 新版本与旧 checkpoint superseded
+
+以下更新允许最终一致，但必须可重试、可审计：
+
+- outbox -> event log publish
+- artifact / log 文件落地
+- `Project Dossier / Project Book` 派生视图编译
+- 通知、PR 创建等控制面外 side effect
 
 ### Event-first / State-first / Dual-write
 
@@ -108,6 +128,44 @@
    - outbox events
 5. Checkpoint Writer 异步写 checkpoint
 
+### 推荐顺序：Context Reset
+
+1. flush 当前轮 pending outbox / retry marker 状态
+2. 写当前恢复基线 `Checkpoint`
+3. 写 `ContextResetRequested`
+4. 退出当前控制上下文
+5. 下一轮从 checkpoint + event cursor 之后恢复
+
+## Protocol Steps
+
+1. handler 读取 authoritative object state 与必要锁状态。
+2. 计算 object delta、lock delta、outbox events 和必要 markers。
+3. 在同一 change-set 中提交所有必须原子化的状态更新。
+4. change-set durable 后，再触发外部 side effect。
+5. `Event Processor` 异步把 outbox 发布到 event log。
+6. `Reconcile / Recovery` 只依据 durable state、event log 和 markers 决定后续动作。
+7. `Checkpoint Writer` 在稳定边界写恢复快照。
+
+## State / Schema
+
+```yaml
+consistency_boundary_profile:
+  truth_hierarchy:
+    current_truth: object_state
+    history: event_log
+    recovery_baseline: checkpoint
+  atomic_changeset_examples:
+    - directive_and_impact_analysis
+    - dispatch_intent_and_run_creation
+    - handoff_and_task_awaiting_acceptance
+    - acceptance_and_task_result
+  eventual_consistency_examples:
+    - outbox_publish
+    - artifact_write
+    - log_write
+    - project_dossier_build
+```
+
 ## Failure Scenario
 
 ### 场景：Dispatch change-set 已提交，但 `launch_run(...)` 无确认
@@ -144,6 +202,31 @@
 - 无悬空 reserved lock
 - Task 可安全重新进入调度流
 
+### 场景：Handoff 已接收，但 Acceptance 尚未记录
+
+#### Before
+
+- `Task.status = dispatched`
+- `AgentRun.status = exited`
+- `Handoff.status = submitted`
+- 无 `Acceptance`
+
+#### Steps
+
+1. `submit_handoff` change-set 成功，`Task -> awaiting_acceptance`。
+2. `run_acceptance` 尚未开始或在开始前崩溃。
+3. Orchestrator 下一轮从 authoritative state 看到：
+   - `Task.awaiting_acceptance`
+   - `Handoff.submitted`
+   - 无 `Acceptance`
+4. Acceptance worker 重新消费 backlog，执行一次 `run_acceptance`。
+5. 仅在 acceptance change-set durable 后，才把 `Task` 推进到 `accepted / rejected / needs_followup`。
+
+#### After
+
+- 不会出现“handoff 已接收但 task 被当作已完成”的不一致。
+- 也不会出现“acceptance 未记录却丢失 handoff 输入”的情况。
+
 ## Mermaid Diagram
 
 ### Recommended Write Ordering
@@ -173,6 +256,14 @@ flowchart TD
     H --> I["start_failed + requeued + lock released"]
 ```
 
+### Atomic vs Eventual Boundary
+
+```mermaid
+flowchart LR
+    A["Atomic ChangeSet Boundary"] --> B["Directive / PlanRevision / Task / AgentRun / Lock / Handoff / Acceptance / Checkpoint"]
+    C["Eventually Consistent Boundary"] --> D["Outbox Publish / Artifact Files / Log Files / Project Dossier / Notifications"]
+```
+
 ## Anti-patterns
 
 - 先 `launch_run(...)`，后补写 Task / AgentRun / Lock 状态。
@@ -185,5 +276,6 @@ flowchart TD
 
 - 读者能明确知道谁是当前事实源、谁是历史、谁是恢复快照。
 - 读者能明确知道 dispatch、acceptance、checkpoint 的推荐写顺序。
+- 读者能明确知道哪些更新必须原子化，哪些允许最终一致。
 - 读者能明确知道系统如何避免重复派发与 blind dual-write。
 - 失败场景能落到具体对象状态与补偿步骤。

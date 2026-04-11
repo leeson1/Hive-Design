@@ -10,6 +10,7 @@
 
 - Research Sprint 用于形成 `Evidence Pack`，不直接作为运行态任务约束。
 - 本文不定义具体搜索工具，只定义结果约束。
+- 是否需要先 research 的判定见 `07-Project-Bootstrap-Protocol.md`。
 
 ## Definitions
 

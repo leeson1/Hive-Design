@@ -4,6 +4,7 @@
 
 - 约束 Worker Session 生命周期。
 - 保证 Worker 可替换、可审计、可恢复。
+- 每次新 session 的定向顺序见 `10-Worker-Session-Bootstrap-Checklist.md`。
 
 ## Rules
 
