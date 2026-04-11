@@ -13,6 +13,7 @@
 - 首版 command 读写对象最小集见 `../03-state-model/07-MVP-Object-Package.md`。
 - command carrier、ChangeSet 与对象字段的 canonical schema 以 `../08-appendix/11-Schema-Catalog.md` 为准。
 - 具体 handler ownership 与 sync / async 执行方式见 `./14-Command-Handler-Blueprint.md`。
+- vNext 角色拓扑与标准 `Run Contract` 模板见 `./15-Agent-Role-Topology-and-Run-Contract.md`。
 - 端到端命令收敛场景见 `../07-reliability/09-End-to-End-Sequence-Scenarios.md`。
 
 ## Definitions

@@ -3,13 +3,21 @@
 ## Purpose
 
 - 定义 Orchestrator 的真实运行方式。
-- 明确 Orchestrator 是状态推进器，不是长驻 AI agent。
-- 本文沿用旧文件路径，但正文统一使用 `Orchestrator`。
+- 明确 Orchestrator 是事件驱动的控制平面状态推进器，不是长驻 AI agent。
+- 说明在 vNext 中 Orchestrator 如何协调 Planner、Research、Execution、Evaluator、Recovery 等角色，而不把这些职责吞进自己内部。
 
 ## Scope
 
-- 本文覆盖 Orchestrator 的职责、生命周期、调度规则与退出规则。
-- 详细控制回路见 `07-reliability/06-Orchestrator-Reconcile-Loop.md`。
+- 本文覆盖 Orchestrator 的职责、生命周期、优先级规则与退出规则。
+- 运行时用户纠偏见 `../07-reliability/07-Runtime-Directive-Handling.md` 与 `../07-reliability/15-User-Interrupt-Replan-and-Preemption-Protocol.md`。
+- context reset 见 `../07-reliability/14-Context-Reset-and-Session-Handoff-Protocol.md`。
+
+## Definitions
+
+- `Orchestrator`：从 authoritative state、事件、checkpoint 和 backlog 重建控制决策的状态机执行器。
+- `Steering Input`：用户运行中追加的目标、约束、优先级或纠偏输入。
+- `Active Workline`：当前正在运行或等待验收的一组任务与 runs。
+- `Control-Plane Action`：由 Orchestrator 触发的 planning、dispatch、acceptance、recovery、reset 类命令。
 
 ## Rules
 
@@ -17,224 +25,122 @@
 
 - Orchestrator 是事件驱动的调度器。
 - Orchestrator 是非常驻的状态机执行器。
-- Orchestrator 的输入是状态对象与事件，不是源码。
-- Orchestrator 不看代码。
-- Orchestrator 不执行 Task。
-- Orchestrator 不修改架构。
-- Orchestrator 只负责状态推进、任务分配、决策分流、异常处理。
+- Orchestrator 的输入是状态对象、事件、checkpoint、ledger、handoff refs，而不是源码。
+- Orchestrator 不读代码。
+- Orchestrator 不执行 task。
+- Orchestrator 不直接修改架构设计。
+- Orchestrator 不用长对话代替状态对象。
+- Orchestrator 每次唤醒都必须从外部状态重建。
 
 ### Core Responsibilities
 
-Orchestrator 只负责：
+Orchestrator 负责：
 
-1. State progression
-2. Task scheduling
-3. Decision routing
-4. Failure handling
+1. `Directive` intake 后的状态推进
+2. planning / task qualification / dispatch 顺序控制
+3. acceptance backlog 推进
+4. timeout / ambiguity / stale lock / rejection 的恢复决策
+5. 用户插话后的 impact analysis、preemption、replan、supersession 路由
+6. context reset gate 与下一轮恢复准备
 
 Orchestrator 不负责：
 
 - 阅读源码
 - 修改代码
-- 执行 Task
-- 重写 Plan
-- 改需求
+- 执行 research / implementation / evaluation 任务
+- 把一句话直接变成自由执行
+- 用 prompt 自由发挥代替协议与状态机
 
 ### Lifecycle
 
 - Wake
 - Load state
-- Process events
-- Apply transition rules
-- Schedule next actions
-- Update state
+- Classify backlog
+- Choose next control-plane actions
+- Commit change-set or enqueue commands
 - Exit
 
 规则：
 
 - Orchestrator 不保持长时间运行。
 - Orchestrator 不依赖持续 context。
-- Orchestrator 的连续性来自外部状态。
+- 连续性来自外部状态与 handoff artifacts。
+- 没有待处理高优先级事件时应退出。
+
+### Scheduling Priority
+
+推荐优先级：
+
+1. `Steering Input / Runtime Directive`
+2. `Recovery / ambiguity / timeout / stale lock`
+3. `Acceptance backlog / evaluation result`
+4. `Planning gaps / qualification gaps`
+5. `Ready task dispatch`
+6. `Checkpoint / maintenance work`
+
+规则：
+
+- 用户输入优先级高于普通 ready task 调度。
+- 恢复问题优先级高于新增执行。
+- acceptance 未闭环时，不得把 worker 完成声明直接视为完成事实。
 
 ## Protocol Steps
 
-1. 接收事件并唤醒 Orchestrator。
-2. 读取最新状态对象、开放事件、当前 Phase、ready task、Issue、Decision。
-3. 逐个处理事件并匹配状态迁移规则。
-4. 选择下一批可调度动作。
-5. 写回状态更新、Issue、Decision、Checkpoint 或任务分配结果。
-6. 无待处理即时事件时退出。
+1. 事件、用户输入、adapter 回调或 operator trigger 到达，唤醒 Orchestrator。
+2. 读取最新 `Directive`、`PlanRevision`、Requirement Ledger、open tasks、active runs、locks、issues、checkpoint。
+3. 分类 backlog：
+   - steering / interrupt
+   - recovery
+   - acceptance
+   - planning
+   - dispatch
+4. 按优先级选择下一批 control-plane actions。
+5. 通过 owning handler 提交 change-set 或排队异步命令。
+6. 若需要派发 external worker，则只生成 `DispatchIntent / Run Contract`，不直接伪造完成状态。
+7. 若 backlog 已收敛到稳定边界，则写 checkpoint 或 reset marker，并退出。
 
-## Mermaid Diagram
+## Mermaid
 
 ### Orchestrator Lifecycle
 
 ```mermaid
 flowchart TD
-    A["Event Arrives"] --> B["Wake Orchestrator"]
-    B --> C["Load State"]
-    C --> D["Process Event"]
-    D --> E["Apply Rules"]
-    E --> F["Update State"]
-    F --> G["Exit"]
+    A["Event / Callback / Steering Input"] --> B["Wake Orchestrator"]
+    B --> C["Load Objects / Events / Checkpoint"]
+    C --> D["Classify Backlog"]
+    D --> E["Choose Control-Plane Actions"]
+    E --> F["Commit ChangeSet / Enqueue Commands"]
+    F --> G{"More high-priority work?"}
+    G -- Yes --> C
+    G -- No --> H["Exit"]
 ```
 
 ### Orchestrator Event Routing
 
 ```mermaid
 flowchart TD
-    A["Task Completed"] --> D["Orchestrator"]
-    B["Task Failed"] --> D
-    C["New Issue Created"] --> D
-    E["Decision Required"] --> D
-    F["Phase Completion Detected"] --> D
-    G["Queen Input Received"] --> D
+    A["Steering Input"] --> D["Orchestrator"]
+    B["Run Timeout / Ambiguity"] --> D
+    C["Handoff / Evaluation Result"] --> D
+    E["Ready Task"] --> D
 
-    D --> H["Schedule Next Task"]
-    D --> I["Retry / Reassign"]
-    D --> J["Route Decision"]
-    D --> K["Advance Phase"]
-    D --> L["Escalate to Queen"]
+    D --> F["Pause / Cancel / Supersede / Replan"]
+    D --> G["Recovery / Requeue / Block"]
+    D --> H["Acceptance / Followup Planning"]
+    D --> I["Dispatch Next Run Contract"]
+    D --> J["Write Checkpoint / Reset Marker"]
 ```
-
-### Orchestrator State Machine
-
-```mermaid
-stateDiagram-v2
-    [*] --> Idle
-    Idle --> ProcessingEvent: event arrives
-    ProcessingEvent --> Scheduling: ready task exists
-    ProcessingEvent --> HandlingIssue: issue or failure detected
-    ProcessingEvent --> AdvancingPhase: phase gate passed
-    Scheduling --> Exiting: actions written
-    HandlingIssue --> Exiting: recovery or escalation written
-    AdvancingPhase --> Exiting: state updated
-    Exiting --> Idle: next wake
-```
-
-### Task Scheduling Decision Flow
-
-```mermaid
-flowchart TD
-    A["Task Candidate"] --> B{"Dependencies Satisfied?"}
-    B -- No --> X["Not Ready"]
-    B -- Yes --> C{"Blocker Exists?"}
-    C -- Yes --> X
-    C -- No --> D{"Phase Active?"}
-    D -- No --> X
-    D -- Yes --> E["Ready"]
-    E --> F["Assign to Worker"]
-```
-
-## Event Model
-
-### Task completed
-
-- 触发源：Worker Handoff + completion claim
-- Orchestrator 动作：校验是否进入 acceptance / evaluation / phase gate
-- 状态变更：Task、Phase、Checkpoint、后续调度队列
-
-### Task failed
-
-- 触发源：Worker failure / validation failure / timeout
-- Orchestrator 动作：分类失败、选择 retry / reassign / recover
-- 状态变更：Issue、Task、AgentRun、Checkpoint
-
-### New issue created
-
-- 触发源：Worker、validation、恢复流程
-- Orchestrator 动作：识别 blocker、决定继续、挂起或升级
-- 状态变更：Issue、Task、Phase
-
-### Decision required
-
-- 触发源：设计冲突、路径冲突、约束冲突
-- Orchestrator 动作：生成候选路径、路由到决策层或记录 Decision
-- 状态变更：Decision、Plan 引用、Phase / Task 状态
-
-### Phase completion detected
-
-- 触发源：Phase gate 条件满足
-- Orchestrator 动作：推进到下一 Phase 或进入 completion
-- 状态变更：Phase、Plan、Checkpoint
-
-### Queen input received
-
-- 触发源：需求调整、范围修正、关键裁决
-- Orchestrator 动作：写入 Directive、评估影响范围、重排队列或升级 planning 工作
-- 状态变更：Directive、Plan、Task、Decision、Checkpoint
-
-## Scheduling Rules
-
-### Ready Task Rule
-
-Orchestrator 只能调度 `ready task`。
-
-Ready task 至少满足：
-
-- task status = ready
-- dependencies satisfied
-- no blocker
-- current phase active
-
-### Scheduling Priority
-
-推荐优先级：
-
-1. Blocking issues
-2. Failed tasks needing recovery
-3. Ready tasks
-4. Phase transitions
-5. New planning work
-
-### Scheduling Discipline
-
-- Orchestrator 不应自由想象“下一个任务是什么”。
-- Orchestrator 必须基于 task graph、依赖关系、状态字段、当前 phase 做确定性选择。
-- Orchestrator 不得绕过 blocker 或 phase gate 强行派发任务。
-
-## Decision Routing Rules
-
-### Execution failure
-
-- 局部执行失败由 Orchestrator 执行 retry / reassign / recover
-- 不能静默跳过失败
-
-### Design conflict
-
-- 设计冲突由 Orchestrator 先处理影响评估
-- 超出局部边界时升级到决策层
-
-### Requirement conflict
-
-- 需求冲突必须升级给 Queen
-- Worker 不得越权做全局决策
-
-### Routing Discipline
-
-- Worker 只上报问题，不做全局裁决。
-- Orchestrator 负责把问题送到正确层级。
-
-## Exit Rules
-
-- 当本轮事件已处理完成，且没有新的待处理事件需要立即推进时，Orchestrator 必须退出。
-- Orchestrator 不是常驻 agent。
-- Orchestrator 不应该保留长 context。
-- Orchestrator 每次被唤醒都应重新读取状态。
 
 ## Anti-patterns
 
-- Orchestrator 变成一个会读代码的大 agent
-- Orchestrator 直接重写 task 内容
-- Orchestrator 自己修改架构
-- Orchestrator 持续运行并累积 context
-- Orchestrator 用模糊 prompt 替代状态机规则
-- Orchestrator 忽略 blocker 直接推进 phase
+- Orchestrator 变成一个会读代码的大 agent。
+- Orchestrator 直接执行 research、implementation 或 evaluation。
+- Orchestrator 持续运行并累积上下文。
+- 用户插话到来后仍继续按普通 ready task 优先级调度。
+- Orchestrator 绕过 owning handler，直接写最终业务状态。
 
 ## Acceptance Criteria
 
-- 读者能明确知道 Orchestrator 不执行代码任务。
 - 读者能明确知道 Orchestrator 的输入是状态与事件，而不是源码。
-- 读者能明确知道 Orchestrator 如何调度 task。
-- 读者能明确知道 Orchestrator 什么时候退出。
-- 读者能明确知道 Orchestrator 如何处理失败和升级。
+- 读者能明确知道用户 steering input 在调度中优先级最高。
+- 读者能明确知道 Orchestrator 何时退出，以及为何可从外部状态重建。

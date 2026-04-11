@@ -35,7 +35,7 @@ Orchestrator 可执行：
 
 - `Execution failure` 优先 `retry / reassign`
 - `Design conflict` 优先 `replan` 或升级决策层
-- `Requirement conflict` 必须升级到 Queen 或用户确认
+- `Requirement conflict` 必须升级到 `Steering / Escalation Authority` 或用户确认
 
 ### No Hidden Failures Rule
 

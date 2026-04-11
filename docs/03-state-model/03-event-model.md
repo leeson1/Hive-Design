@@ -102,8 +102,8 @@ transition_effect:
 | `AcceptanceRejected` | Acceptance Engine | Orchestrator / Recovery | `Task.awaiting_acceptance -> requeued / blocked` |
 | `AcceptanceNeedsFollowup` | Acceptance Engine | Orchestrator / Recovery | 生成 followup action |
 | `AcceptancePartiallyAccepted` | Acceptance Engine | Orchestrator / Recovery | 记录 partial accept 与后续动作 |
-| `IssueOpened` | Worker / Orchestrator / Acceptance | Orchestrator / Queen | 创建或更新 `Issue` |
-| `IssueEscalated` | Orchestrator | Queen / Decision Layer | 触发裁决流 |
+| `IssueOpened` | Worker / Orchestrator / Acceptance | Orchestrator / Steering Authority | 创建或更新 `Issue` |
+| `IssueEscalated` | Orchestrator | Steering Authority / Decision Layer | 触发裁决流 |
 | `LockAcquired` | Lock Manager | Orchestrator / Scheduler / State Store | `Lock.requested/reserved -> reserved/active` |
 | `LockConflictDetected` | Lock Manager | Orchestrator / Scheduler | 任务进入 blocked 或等待 |
 | `LockRecoveryHeld` | Recovery Coordinator / Lock Manager | Orchestrator / Recovery | `Lock.active -> recovery_hold` |

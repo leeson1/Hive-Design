@@ -10,12 +10,16 @@
 
 - 本文覆盖规划层编译，不覆盖运行时调度。
 - `Execution Plan` 的版本修订协议见状态模型分卷。
+- 项目首轮初始化见 `./07-Project-Bootstrap-Protocol.md`。
+- vNext 从一句输入扩展到 `Product Spec / Task Graph / Run Contract` 的总流水线见 `./09-Input-to-Spec-and-TaskGraph-Pipeline.md`。
+- Requirement Ledger 见 `./08-Requirement-Ledger-and-Coverage-Model.md`。
 
 ## Definitions
 
 - `Compilation`：将输入对象转换为下游结构化对象的过程。
 - `Stable Layer`：`Charter`。
 - `Evolving Layer`：`Execution Plan`。
+- `Product Spec`：在 vNext 中统一目标、范围、不变量与成功标准的规划总包；当前 MVP 中其职责主要由 `Brief + Charter` 共同承担。
 - `Acceptance Extraction`：从规划结果中抽取任务级验收条件。
 - `Validation Extraction`：从规划结果中抽取验证方法。
 
@@ -35,6 +39,7 @@
 - 阶段划分、执行次序、任务来源、恢复策略进入 `Execution Plan`。
 - 调研中尚未证实的内容不得进入 `Charter`。
 - 仅对当前运行有效的排序、优先级、补丁路径应进入 `Execution Plan`，不得进入 `Charter`。
+- 面向人阅读的长设计文档应从 `Brief / Charter / Execution Plan / Requirement Ledger` 编译为 `Project Dossier / Project Book`，不得直接作为运行时事实源。
 
 ### Extraction Rule
 
@@ -50,7 +55,8 @@
 4. 编译阶段、里程碑、任务来源到 `Execution Plan`。
 5. 对每个阶段抽取 acceptance criteria。
 6. 对每类工作抽取 validation plan。
-7. 写出新的 `Execution Plan` 或 `plan_revision`。
+7. 生成 Requirement Ledger 初稿并建立与 task graph 的映射。
+8. 写出新的 `Execution Plan` 或 `plan_revision`。
 
 ## State / Schema
 

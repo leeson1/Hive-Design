@@ -2,33 +2,31 @@
 
 ## Purpose
 
-- 把现有协议文档收敛成 first implementation 可直接开工的代码蓝图。
-- 回答首版系统最小代码结构、核心组件接口、同步/异步路径和模块依赖方向。
-- 为工程团队提供“先建什么目录、先写什么 schema、哪些模块必须真做”的统一基线。
+- 把已收敛的协议整理成首个 Hive 控制平面原型仓可直接开工的实现蓝图。
+- 明确首版真正要实现什么，以及哪些内容仍停留在 vNext 设计层。
+- 保证文档升级到长期自治 harness 之后，不会把当前 MVP 边界重新做散。
 
 ## Scope
 
-- 本文只约束首个 Hive 控制平面原型仓。
-- 本文不引入新的哲学边界，不推翻既有对象模型、事件模型、change-set / outbox、reconcile / recovery 语义。
-- 本文默认首版实现遵循单仓库、单 active plan revision、单 writer、单 executor adapter、SQLite + filesystem。
-- 详细对象字段见 `../03-state-model/07-MVP-Object-Package.md`。
-- 详细命令到 handler 的落点见 `../05-execution/14-Command-Handler-Blueprint.md`。
-- 详细分阶段开工计划见 `./04-Phased-Implementation-Plan.md`。
+- 本文只约束 `Layer 1 / MVP Control Plane`。
+- 本文不引入 multi-writer、multi-repo、复杂 policy engine、rich UI 等扩展范围。
+- vNext 目标架构见 `05-Hive-vNext-Long-Running-Agent-Harness.md`。
+- 对象字段见 `../03-state-model/07-MVP-Object-Package.md`。
+- handler ownership 见 `../05-execution/14-Command-Handler-Blueprint.md`。
 
 ## Definitions
 
 - `First Implementation`：第一个可运行、可恢复、可验收、可回放的 Hive 控制平面原型。
 - `Single Writer Runtime`：同一时刻只有一个写入路径提交 authoritative state change-set。
-- `Sync Edge`：处理用户输入、adapter 回调和运维命令的同步入口。
+- `Sync Edge`：处理用户输入、adapter 回调、operator 命令的同步入口。
 - `Async Runtime`：由 reconcile loop 驱动的异步状态推进路径。
-- `Stub Module`：首版需要占位接口和测试夹具，但不承载完整业务语义的模块。
-- `Real Module`：首版必须提供真实持久化、真实状态推进或真实外部接入能力的模块。
+- `Design-Only Artifact`：在 vNext 中有明确语义，但当前 MVP 不作为一等实现目标的对象或协议。
 
 ## Rules
 
 ### First Implementation Goal
 
-首版必须验证以下闭环，而不是继续扩展概念边界：
+首版必须稳定跑通以下五条链，而不是继续扩张概念边界：
 
 1. `submit_user_input -> compile_directive -> compile_plan -> qualify_task`
 2. `prepare_dispatch -> launch_run -> acknowledge_run_started -> report_run_exit`
@@ -36,7 +34,25 @@
 4. `start_recovery -> reconcile_once -> requeue / re-dispatch`
 5. `ChangeSet + Outbox + Event Log + Checkpoint` 在失败情况下仍保持一致
 
-如果上述五条链路可稳定跑通，Hive 就已经具备 first implementation 的控制平面价值。
+只要这五条链路可稳定跑通，Hive 就已经具备 first implementation 的控制平面价值。
+
+### MVP Included vs Design-Only vs Excluded
+
+| 分类 | 内容 |
+|---|---|
+| 当前 MVP 必须真做 | `Directive`、`PlanRevision`、`Task`、`AgentRun`、`Handoff`、`Acceptance`、`Issue`、`Lock`、`Checkpoint`、`DispatchIntent`、`RecoveryAction`、`ChangeSet / Outbox / Event Log` |
+| 当前 MVP 可作为 stub 或 fixture | `Research Sprint`、`Evidence Pack`、`Product Spec`、`Run Contract` 的完整持久化与自动编译链 |
+| 明确不进入当前阶段 | multi-writer distributed control plane、multi-repo federation、复杂 policy engine、rich UI / dashboard、完整人工审批工作流 |
+
+### 当前 MVP 与 vNext 的关系
+
+- 当前 MVP 先证明控制平面闭环成立。
+- vNext 再把“一句话输入 -> spec -> task graph -> run contract -> multi-role dispatch”做完整。
+- vNext 不会推翻 MVP 的事实层级：
+  - `authoritative object state` 仍是当前事实来源
+  - `Event Log` 仍是历史与 replay 输入
+  - `Checkpoint` 仍是恢复快照
+  - `launch_run` 仍只能写 side effect token / launch markers
 
 ### 首版运行边界
 
@@ -45,15 +61,12 @@
 | 仓库边界 | 单仓库 | multi-repo federation |
 | 写入者 | 单 writer runtime | 多 writer 并发提交 |
 | 执行器 | 单 adapter profile | 多 adapter 动态选择与策略优化 |
-| 存储 | SQLite + filesystem | Postgres + MQ + object storage |
+| 存储 | `SQLite + filesystem` | Postgres + MQ + object storage |
 | 调度 | 单 active plan revision、串行 writer、有限并发 run | 分布式调度、全局多队列 |
-| 锁 | path lock | 复杂 repo/module 组合锁策略 |
 | 验收 | canonical evidence + basic rules | 高级 policy engine / rich scoring |
-| 恢复 | rehydrate + reconcile + requeue | live restore hard dependency |
+| 恢复 | rehydrate + reassign | live restore hard dependency |
 
 ### 代码级核心组件分层
-
-首版代码必须按以下 5 层组织，而不是围绕“今天谁来写”堆 service：
 
 1. `apps/control-plane`
    - bootstrap、配置加载、runtime loop、sync ingress 注册
@@ -70,9 +83,10 @@
 
 | 组件 | 主要输入 | 主要输出 | 首版要求 |
 |---|---|---|---|
-| `IntakeHandler` | `submit_user_input` command envelope | intake journal append、`UserInputReceived` outbox | 真做 |
+| `IntakeHandler` | `submit_user_input` | intake journal append、`UserInputReceived` outbox | 真做 |
 | `DirectiveCompiler` | raw input ref、active plan summary | `Directive` change-set、`RuntimeDirectiveCreated` | 真做 |
-| `PlanCompiler` | `Directive`、current `PlanRevision`、open `Task` set | `PlanRevision`、`Phase`、`Task` drafts、supersession mapping | 真做 |
+| `PlanCompiler` | `Directive`、current `PlanRevision` | `PlanRevision`、`Phase`、`Task` drafts、supersession mapping | 真做 |
+| `Requirement Ledger Service` | `Brief` / `PlanRevision` / `Acceptance` | requirement entries、coverage state、uncovered set | 真做 |
 | `TaskQualificationService` | `Task`、`Phase`、plan constraints | `TaskQualified` 或 `TaskBlocked` | 真做 |
 | `DispatchPreparationService` | ready `Task`、lock request set、executor profile | `DispatchIntent`、`AgentRun(created)`、reserved `Lock` | 真做 |
 | `RunLaunchService` | prepared `DispatchIntent`、workspace plan | side effect token、adapter launch request | 真做 |
@@ -80,58 +94,14 @@
 | `AcceptanceService` | `Task`、`AgentRun`、`Handoff`、artifact refs | `Acceptance`、followup `Task` 或 `Issue` | 真做 |
 | `RecoveryService` | timeout / ambiguity markers、latest `Checkpoint` | `RecoveryAction`、`Task` requeue/block、lock recovery hold | 真做 |
 | `CheckpointWriter` | state snapshot、event cursor | `Checkpoint`、`CheckpointWritten` | 真做 |
-| `Read API` | object queries | 只读视图 | 先 stub |
-| `Policy Engine` | acceptance/recovery policy requests | policy decision | 先 stub |
-
-### 推荐目录结构
-
-首版推荐目录如下，详细 layout 见 `../08-appendix/14-MVP-Repo-Layout.md`：
-
-```text
-hive-control-plane/
-├── apps/
-│   └── control-plane/
-├── packages/
-│   ├── ids-and-enums/
-│   ├── schema-validation/
-│   ├── persistence/
-│   ├── changesets/
-│   ├── eventing/
-│   ├── intake/
-│   ├── directives/
-│   ├── planning/
-│   ├── scheduler/
-│   ├── locks/
-│   ├── runs/
-│   ├── acceptance/
-│   ├── recovery/
-│   ├── checkpointing/
-│   ├── adapters/
-│   │   ├── base/
-│   │   ├── codex/
-│   │   └── fake/
-│   └── conformance/
-├── migrations/
-│   └── sqlite/
-├── tests/
-│   ├── fixtures/
-│   ├── integration/
-│   ├── conformance/
-│   └── e2e/
-└── var/
-    ├── state/
-    ├── artifacts/
-    ├── logs/
-    ├── workspaces/
-    └── exports/
-```
+| `Planning Pipeline for Research / Spec` | research / evidence / spec automation | 完整 input-to-spec 编译链 | 设计层，首版可 stub |
+| `Run Contract Compiler` | spec / task source / executor role | 标准化 run contract | 设计层，首版先折叠进 `Task` 字段 |
 
 ### 模块依赖方向
 
 - `entrypoints -> domain -> foundation`
 - `runs -> adapters`
 - `checkpointing / acceptance / recovery -> persistence + eventing`
-- `persistence` 不反向依赖任何业务模块
 - `adapters` 不依赖 `planning`、`acceptance`、`checkpointing`
 - `eventing` 不推导业务决策，只发布 outbox
 
@@ -165,11 +135,9 @@ flowchart LR
     EVT --> PST
 ```
 
-### Sync 路径 / Async 路径在代码中的落点
+### Sync 路径 / Async 路径落点
 
 #### Sync Edge
-
-这些命令必须落在同步 handler 中，只负责 durable commit，不跑长链路状态推进：
 
 - `submit_user_input`
 - `acknowledge_run_started`
@@ -178,18 +146,7 @@ flowchart LR
 - `submit_handoff`
 - operator-triggered `start_recovery`
 
-推荐代码落点：
-
-- `packages/intake/handlers/submit_user_input.ts`
-- `packages/runs/handlers/acknowledge_run_started.ts`
-- `packages/runs/handlers/report_heartbeat.ts`
-- `packages/runs/handlers/report_run_exit.ts`
-- `packages/runs/handlers/submit_handoff.ts`
-- `packages/recovery/handlers/start_recovery.ts`
-
 #### Async Runtime
-
-这些命令必须落在 reconcile loop 驱动的异步路径中：
 
 - `compile_directive`
 - `compile_plan`
@@ -202,18 +159,30 @@ flowchart LR
 - `reconcile_once`
 - `request_context_reset`
 
-推荐代码落点：
+### 哪些模块必须真做，哪些可先 stub
 
-- `packages/directives/jobs/compile_directive.ts`
-- `packages/planning/jobs/compile_plan.ts`
-- `packages/planning/jobs/qualify_task.ts`
-- `packages/runs/jobs/prepare_dispatch.ts`
-- `packages/runs/jobs/launch_run.ts`
-- `packages/acceptance/jobs/run_acceptance.ts`
-- `packages/checkpointing/jobs/write_checkpoint.ts`
-- `packages/recovery/jobs/start_recovery.ts`
-- `packages/runtime/jobs/reconcile_once.ts`
-- `packages/runtime/jobs/request_context_reset.ts`
+| 模块 | 首版要求 | 原因 |
+|---|---|---|
+| `ids-and-enums` | 真做 | 所有对象、事件、命令和状态迁移都依赖它 |
+| `schema-validation` | 真做 | 没有 validator，change-set 与 fixture 无法稳定收敛 |
+| `persistence` | 真做 | authoritative state、event log、outbox 都在这里 |
+| `changesets` | 真做 | 是控制平面一致性边界本身 |
+| `eventing` | 真做 | outbox append / publish / dedup 是 MVP 主链 |
+| `intake` | 真做 | 所有任务生命周期起点 |
+| `directives` | 真做 | 需要把用户输入收敛成结构化指令 |
+| `planning` | 真做 | 没有 `PlanRevision / Task` 就没有可派发对象 |
+| `locks` | 真做 | 必须先防重复派发和路径冲突 |
+| `runs` | 真做 | `DispatchIntent / AgentRun` 是执行链主轴 |
+| `acceptance` | 真做 | `Handoff != 完成` 的边界必须落地 |
+| `recovery` | 真做 | 首版必须处理 launch ambiguity / timeout / stale lock |
+| `checkpointing` | 真做 | 恢复基线必须可写 |
+| `adapters/codex` | 真做 | 需要至少一个真实执行器 |
+| `adapters/fake` | 真做 | conformance / e2e 需要确定性回放 |
+| `research / evidence / spec automation` | stub | vNext 目标明确，但不阻塞当前控制平面闭环 |
+| `run-contract persistence` | stub | 首版先折叠进 `Task` 与 `TaskSpec` 字段 |
+| `dashboard / UI` | stub | 首版重点不是操作台 |
+
+## Mermaid
 
 ### 首版运行时组件图
 
@@ -277,107 +246,15 @@ flowchart TD
     ADAPTER --> HANDOFF
 ```
 
-### 哪些模块必须先 stub，哪些模块必须真做
-
-| 模块 | 首版要求 | 原因 |
-|---|---|---|
-| `ids-and-enums` | 真做 | 所有对象、事件、命令和状态迁移都依赖它 |
-| `schema-validation` | 真做 | 没有 validator，change-set 和 fixture 无法稳定收敛 |
-| `persistence` | 真做 | authoritative state、event log、outbox 都在这里 |
-| `changesets` | 真做 | 是控制平面一致性边界本身 |
-| `eventing` | 真做 | outbox append / publish / dedup 是 MVP 主链 |
-| `intake` | 真做 | 所有任务生命周期起点 |
-| `directives` | 真做 | 需要把用户输入收敛成结构化指令 |
-| `planning` | 真做 | 没有 `PlanRevision / Task` 就没有可派发对象 |
-| `locks` | 真做 | 必须先防重复派发和路径冲突 |
-| `runs` | 真做 | `DispatchIntent / AgentRun` 是执行链主轴 |
-| `acceptance` | 真做 | `Handoff != 完成` 的边界必须落地 |
-| `recovery` | 真做 | 首版必须处理 launch ambiguity / timeout / stale lock |
-| `checkpointing` | 真做 | 恢复基线必须可写 |
-| `adapters/codex` | 真做 | 需要至少一个真实执行器 |
-| `adapters/fake` | 真做 | conformance / e2e 需要确定性回放 |
-| `read api` | stub | 首版可直接查 SQLite，不阻塞闭环 |
-| `policy engine` | stub | 先用固定规则，不引入高级策略层 |
-| `research/evidence compiler` | stub | 先以引用输入或 fixture 替代，不阻塞控制平面 |
-| `dashboard / UI` | stub | 首版重点不是操作台 |
-
-### command -> service -> store / event / adapter 流向
-
-```mermaid
-flowchart LR
-    CMD["Command"] --> HANDLER["Owning Handler"]
-    HANDLER --> VALID["Schema / Guard Validation"]
-    VALID --> CS["ChangeSet Builder + Applier"]
-    CS --> STORE["SQLite Object Store"]
-    CS --> OUTBOX["Outbox Events"]
-    OUTBOX --> PUB["Outbox Publisher"]
-    PUB --> EVENTLOG["Event Log"]
-    HANDLER --> SIDEFX{"External Side Effect?"}
-    SIDEFX -- No --> DONE["Return Command Result"]
-    SIDEFX -- Yes --> TOKEN["Write Side Effect Token"]
-    TOKEN --> ADAPTER["Executor Adapter"]
-    ADAPTER --> CALLBACK["Ack / Exit / Handoff Callback"]
-    CALLBACK --> HANDLER
-```
-
-### 与现有协议文档的映射关系
-
-| 实现问题 | 优先文档 | 本文作用 |
-|---|---|---|
-| 对象和字段最小集 | `../03-state-model/07-MVP-Object-Package.md` | 定义代码模块与对象落点 |
-| 事件与枚举命名 | `../03-state-model/03-event-model.md`、`../03-state-model/06-Canonical-Enums-and-Identifiers.md` | 约束模块输入输出命名 |
-| 计划编译链 | `../04-planning/05-plan-compilation-protocol.md`、`../04-planning/06-task-graph-compilation.md` | 确定 `directives` / `planning` 模块边界 |
-| command surface | `../05-execution/11-Control-Plane-API-Contract.md` | 映射到 handler 与 runtime 落点 |
-| command handler 细节 | `../05-execution/14-Command-Handler-Blueprint.md` | 细化读写集合、事件和恢复 ownership |
-| change-set / outbox | `../06-coordination/03-Change-Set-and-Outbox-Contract.md` | 落成统一提交路径 |
-| storage profile | `../06-coordination/04-MVP-Storage-Backend-Profile.md` | 决定 SQLite + filesystem |
-| reconcile / recovery | `../07-reliability/06-Orchestrator-Reconcile-Loop.md`、`../07-reliability/03-Failure-Recovery-Protocol.md` | 决定 async runtime 执行顺序 |
-| e2e 场景 | `../07-reliability/09-End-to-End-Sequence-Scenarios.md` | 反向验证目录和 handler 是否足够 |
-| phased delivery | `./04-Phased-Implementation-Plan.md` | 决定实际开工顺序 |
-
-## Design Notes
-
-### 首版推荐进程装配
-
-- 只启动一个 `control-plane` 进程。
-- 该进程内部维护一个 serialized command executor。
-- 所有 authoritative write 都通过同一个 `ChangeSet Applier`。
-- `OutboxPublisher`、`LeaseMonitor`、`ReconcileLoop` 可以是同进程内不同 worker，但必须共享同一 writer gate。
-
-### 为什么首版不拆微服务
-
-- 当前最关键风险是状态推进是否正确，而不是部署拓扑。
-- 多进程会引入第二层一致性问题，掩盖 `ChangeSet + Outbox + Recovery` 是否正确。
-- 单 writer 单进程更容易把 command、event、state、artifact 的因果链跑通，并形成 conformance fixture。
-
-### 代码组织的硬性原则
-
-- handler 负责业务判断，不直接写 SQL。
-- repository 负责持久化，不做业务决策。
-- adapter 负责外部执行器差异，不决定 `Task` 是否完成。
-- `Checkpoint` 是派生快照，不反向覆盖对象状态。
-
 ## Anti-patterns
 
-- 在 `apps/control-plane` 里混写 handler、SQL、业务判断、adapter 调用。
-- 在 `launch_run` 中直接把 `Task` 改成 `accepted` 或 `completed`。
-- 让 adapter 直接写 `Acceptance`、`Checkpoint`、`Issue`。
-- 先实现 read API / UI / 策略层，再补 change-set / outbox。
-- 为“以后可能要扩展”先做多 writer、多队列、多仓 federation。
+- 把 vNext 的规划自动化目标直接塞回 MVP，导致首版无法收敛。
+- 因为要支持长期自治，就把 authoritative state、event log、checkpoint 的层级关系改乱。
+- 在 `prepare_dispatch` 之前就触发外部 side effect。
+- 让 `launch_run` 直接伪造 `running` 或 `success` 状态。
 
 ## Acceptance Criteria
 
-- 工程师能据本文搭出首版仓目录、模块依赖和 runtime assembly。
-- 工程师能明确哪些命令走 sync edge，哪些命令由 async runtime 消费。
-- 工程师能明确哪些模块必须真做，哪些模块只需 stub 接口和 fixture。
-- 工程师能把本文与对象包、handler mapping、golden path、phased plan 组成一套可实施实现包。
-
-## MVP 落地检查表
-
-- [x] 已明确 first implementation 的目标不是继续泛化，而是验证控制平面闭环。
-- [x] 已明确首版运行边界：单仓库、单 writer、单 adapter、SQLite + filesystem。
-- [x] 已给出代码级核心组件分层、推荐目录结构和依赖方向。
-- [x] 已给出 sync path / async path 在代码中的推荐落点。
-- [x] 已明确哪些模块必须真做，哪些模块允许先 stub。
-- [ ] 仍需后续 ADR / spike 验证：具体语言选型、SQLite migration 工具、adapter 进程模型细节。
-- [ ] 明确不进入首版实现：multi-repo、multi-writer、advanced policy engine、rich UI、distributed bus。
+- 实现方能明确知道当前 MVP 要做什么、什么仍然是设计层。
+- 读者能明确知道 vNext 是在 MVP 之上增量升级，而不是推翻当前蓝图。
+- 文档仍保持与对象包、command model、change-set / outbox 设计一致。

@@ -11,6 +11,7 @@
 - 本文只决定 MVP 的首适配器优先级，不宣称能力已全部验证。
 - 能力证据仍以 `09-Executor-Capability-Matrix.md` 与 `12-Executor-Validation-Plan.md` 为准。
 - 本文不扩展 executor adapter contract。
+- vNext 的多角色拓扑与 `Run Contract` 模板见 `15-Agent-Role-Topology-and-Run-Contract.md`；这不改变当前 MVP 的单 adapter profile 收敛。
 
 ## Definitions
 
@@ -93,6 +94,12 @@ Codex 在这些点上的文档化信号更适合首版。
 - 这意味着 Claude Code 不被排除，只是不应成为 MVP 的 first dependency。
 
 ## MVP Binding Profile for Codex
+
+说明：
+
+- 当前推荐 `Codex` 作为 first adapter，解决的是“先让哪一个外部执行器接入 Hive 控制平面”的问题。
+- 这不意味着 vNext 每个角色都要绑定不同 adapter。
+- 在当前阶段，Planner / Research / Execution / Evaluator 这些角色即使逐步成型，也仍可以先复用同一个 adapter profile，由控制平面通过不同 `Run Contract` 区分职责。
 
 ### 首版可以依赖的能力
 

@@ -125,7 +125,7 @@ flowchart TD
     A["User Input"] --> B["Create Directive"]
     B --> C["Impact Analysis"]
     C --> D{"Need Charter Change?"}
-    D -- Yes --> E["Open Decision / Queen Escalation"]
+    D -- Yes --> E["Open Decision / Escalation"]
     D -- No --> F{"Plan Impact?"}
     F -- No --> G["Continue or Pause Current Work"]
     F -- Yes --> H["Create Plan Revision"]
