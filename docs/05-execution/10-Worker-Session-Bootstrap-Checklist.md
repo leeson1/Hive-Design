@@ -11,6 +11,7 @@
 - 本文覆盖外部执行器 session 的 bootstrap 阶段。
 - 本文不替代完整执行协议；完整 session 生命周期见 `00-Agent-Session-Protocol.md`。
 - Context reset 前后如何恢复见 `../07-reliability/09-Context-Reset-and-Session-Continuity.md`。
+- session scaffold artifact set 的定义见 `16-Executor-Session-Scaffold-Profile.md`。
 
 ## Definitions
 

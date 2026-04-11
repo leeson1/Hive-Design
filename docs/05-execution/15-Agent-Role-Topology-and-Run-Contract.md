@@ -32,6 +32,7 @@
 3. Planner、Research、Execution、Evaluator 可以共享底层执行器能力，但在协议上必须视为不同角色。
 4. Evaluator 必须独立于同一工作单元的 Execution Agent。
 5. Recovery / Reconciliation 的最终状态决策属于控制平面，不属于 adapter，也不属于外部 worker。
+6. 外部 worker 不从共享队列自主 claim task；`Run Contract` 只能由 control plane 编译并派发。
 
 ### 角色分工矩阵
 
@@ -81,6 +82,7 @@
 ### Run Contract 总规则
 
 - 每个 run contract 只绑定一个角色、一个主要 objective、一个 bounded scope。
+- worker 只能消费已派发给自己的 `Run Contract`，不得自己 claim 未派发任务。
 - run contract 必须能被下一轮 session 读取与接力。
 - run contract 必须显式写出 done criteria、validation method、escalation rule。
 - run contract 必须显式写出 timeout / heartbeat expectation。
@@ -193,6 +195,7 @@ flowchart TD
 
 - 用同一个 agent 同时做 execution 和 final evaluation。
 - Planner 直接把自己生成的 task 标成 ready 并自派发。
+- worker 自己从 backlog claim task，绕过 control plane dispatch。
 - Research Agent 一边调研一边直接改 runtime truth。
 - Recovery 决策依赖 adapter 或 worker 自报状态，而不是 authoritative object state。
 - run contract 缺少 done criteria、validation 或 handoff requirements。

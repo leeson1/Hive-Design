@@ -29,7 +29,7 @@
 | 层级 | 目标 | 当前状态 | 典型文档 |
 |---|---|---|---|
 | Layer 1 | 收敛第一个可实现的 Hive 控制平面 | 已收敛为实现前设计包 | `00-overview/03`、`03-state-model/07`、`05-execution/11`、`05-execution/14` |
-| Layer 2 | 定义长期自治多-agent harness 的目标架构 | 本次升级新增总纲与协议 | `00-overview/05`、`04-planning/09`、`05-execution/15`、`07-reliability/14`、`07-reliability/15` |
+| Layer 2 | 定义长期自治多-agent harness 的目标架构 | 本次升级新增总纲与协议 | `00-overview/05`、`04-planning/09`、`04-planning/10`、`04-planning/11`、`05-execution/15`、`05-execution/16`、`07-reliability/14`、`07-reliability/15`、`07-reliability/16` |
 | Layer 3 | 明确不在当前阶段扩展的方向 | 明确排除 | multi-writer、multi-repo、复杂 policy engine、rich UI、完整人工审批 |
 
 ### 总体边界
@@ -64,9 +64,13 @@
 
 1. `00-overview/05-Hive-vNext-Long-Running-Agent-Harness.md`
 2. `04-planning/09-Input-to-Spec-and-TaskGraph-Pipeline.md`
-3. `05-execution/15-Agent-Role-Topology-and-Run-Contract.md`
-4. `07-reliability/14-Context-Reset-and-Session-Handoff-Protocol.md`
-5. `07-reliability/15-User-Interrupt-Replan-and-Preemption-Protocol.md`
+3. `04-planning/10-Benchmark-Repo-Research-Protocol.md`
+4. `04-planning/11-Project-Dossier-Compilation-Protocol.md`
+5. `05-execution/15-Agent-Role-Topology-and-Run-Contract.md`
+6. `05-execution/16-Executor-Session-Scaffold-Profile.md`
+7. `07-reliability/14-Context-Reset-and-Session-Handoff-Protocol.md`
+8. `07-reliability/15-User-Interrupt-Replan-and-Preemption-Protocol.md`
+9. `07-reliability/16-Run-Termination-and-Reassignment-Matrix.md`
 
 ### 第三遍：按专题补细节
 
@@ -76,8 +80,9 @@
 4. `04-planning/06-task-graph-compilation.md`
 5. `04-planning/07-Project-Bootstrap-Protocol.md`
 6. `04-planning/08-Requirement-Ledger-and-Coverage-Model.md`
-7. `07-reliability/04-Incremental-Progress-Discipline.md`
-8. `07-reliability/09-Context-Reset-and-Session-Continuity.md`
+7. `05-execution/10-Worker-Session-Bootstrap-Checklist.md`
+8. `07-reliability/04-Incremental-Progress-Discipline.md`
+9. `07-reliability/09-Context-Reset-and-Session-Continuity.md`
 
 ## 目录结构
 
@@ -119,7 +124,9 @@ docs/
 │   ├── 06-task-graph-compilation.md
 │   ├── 07-Project-Bootstrap-Protocol.md
 │   ├── 08-Requirement-Ledger-and-Coverage-Model.md
-│   └── 09-Input-to-Spec-and-TaskGraph-Pipeline.md
+│   ├── 09-Input-to-Spec-and-TaskGraph-Pipeline.md
+│   ├── 10-Benchmark-Repo-Research-Protocol.md
+│   └── 11-Project-Dossier-Compilation-Protocol.md
 ├── 05-execution/
 │   ├── 00-Agent-Session-Protocol.md
 │   ├── 01-任务准入规则.md
@@ -137,7 +144,8 @@ docs/
 │   ├── 12-Executor-Validation-Plan.md
 │   ├── 13-First-Executor-Profile.md
 │   ├── 14-Command-Handler-Blueprint.md
-│   └── 15-Agent-Role-Topology-and-Run-Contract.md
+│   ├── 15-Agent-Role-Topology-and-Run-Contract.md
+│   └── 16-Executor-Session-Scaffold-Profile.md
 ├── 06-coordination/
 │   ├── 01-文件系统协同规则.md
 │   ├── 02-Consistency-and-Transaction-Boundaries.md
@@ -159,7 +167,8 @@ docs/
 │   ├── 12-Reconcile-Worker-and-Event-Processor-Blueprint.md
 │   ├── 13-Conformance-Test-Strategy.md
 │   ├── 14-Context-Reset-and-Session-Handoff-Protocol.md
-│   └── 15-User-Interrupt-Replan-and-Preemption-Protocol.md
+│   ├── 15-User-Interrupt-Replan-and-Preemption-Protocol.md
+│   └── 16-Run-Termination-and-Reassignment-Matrix.md
 └── 08-appendix/
     ├── 01-术语表.md
     ├── 02-模板索引.md
@@ -193,9 +202,13 @@ docs/
 ### 下一阶段要补齐的内容
 
 - 一句话输入到 `Research Sprint -> Evidence Pack -> Product Spec -> Execution Plan -> Task Graph -> Run Contract` 的编译链
+- benchmark repo research 如何受控进入 `Evidence Pack`
+- `Project Dossier / Project Book` 如何从结构化对象编译为人类长文档
 - Planner / Research / Execution / Evaluator / Recovery 的角色拓扑
+- session scaffold artifacts 如何在 reset / replacement 后帮助 worker get bearings
 - 用户运行中插话的 impact analysis、preemption、replan 和 supersession 协议
 - context reset 的 reset trigger、gate、handoff artifact、恢复最小上下文协议
+- run termination / reassignment 在 adapter 能力不确定时的统一降级矩阵
 
 ### 明确不进入当前阶段的内容
 

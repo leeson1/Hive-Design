@@ -4,6 +4,7 @@
 
 - 定义失败分类与恢复动作。
 - 保证失败可见、可追溯、可恢复。
+- 更细的 run 终止与重派矩阵见 `16-Run-Termination-and-Reassignment-Matrix.md`。
 
 ## Rules
 

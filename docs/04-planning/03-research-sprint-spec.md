@@ -11,6 +11,7 @@
 - Research Sprint 用于形成 `Evidence Pack`，不直接作为运行态任务约束。
 - 本文不定义具体搜索工具，只定义结果约束。
 - 是否需要先 research 的判定见 `07-Project-Bootstrap-Protocol.md`。
+- 若 research 需要使用同类仓库 / 参考实现，具体协议见 `10-Benchmark-Repo-Research-Protocol.md`。
 
 ## Definitions
 
@@ -29,6 +30,7 @@
 - `scope`
 - `source_budget`
 - `allowed_sources`
+- `benchmark_repo_policy_ref`（若本轮包含 repo example research）
 - `stop_condition`
 - `output_contract`
 
@@ -39,6 +41,7 @@
 - 调研必须记录证据，不得只记录结论。
 - 调研输出必须先进入 `Evidence Pack`，不得直接写成 Task。
 - Research Sprint 完成不等于 Plan 可直接执行，仍需编译。
+- 若 `allowed_sources` 包含 benchmark repos，则必须显式声明 repo example budget、去重边界与编译规则。
 
 ### Stop Rule
 
@@ -73,6 +76,7 @@ source_budget:
 allowed_sources:
   - official_docs
   - existing_repo_examples
+benchmark_repo_policy_ref: 10-Benchmark-Repo-Research-Protocol.md
 stop_condition:
   - core_questions_answered
   - budget_exhausted

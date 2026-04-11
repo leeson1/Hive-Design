@@ -12,6 +12,7 @@
 - 本文不改变当前 MVP 的事实对象层级。
 - 首轮 MVP bootstrap 入口仍见 `07-Project-Bootstrap-Protocol.md`。
 - 当前 `Research Sprint`、`Evidence Pack`、`Requirement Ledger` 等基本语义仍以既有文档为准。
+- 面向人阅读的 `Project Dossier / Project Book` 编译协议见 `11-Project-Dossier-Compilation-Protocol.md`。
 
 ## Definitions
 
@@ -71,6 +72,13 @@
   - unresolved questions
 - 当前 MVP 若未将其持久化为一等对象，可由 `Brief + Charter` 的编译投影承担同等职责。
 
+### Project Dossier / Project Book 规则
+
+- `Project Dossier / Project Book` 是从 `Product Spec / Execution Plan / Requirement Ledger / Evidence Pack / Handoff summary` 编译出来的派生视图。
+- 它可以很长，适合作为人类阅读和阶段汇报文档。
+- 它不能替代 `Product Spec`、`Task Graph`、`Run Contract` 或 runtime truth。
+- scheduler、acceptance、recovery 必须读取结构化对象，而不是回读 dossier 文本。
+
 ### Run Contract 进入派发前的最小条件
 
 - objective 明确
@@ -101,8 +109,9 @@
    - 形成任务节点、依赖关系、阻塞关系、冲突范围
 8. 编译 `Run Contract`：
    - 为 Planner / Research / Execution / Evaluator 不同角色生成标准契约
-9. 由 Orchestrator 基于 ready set 派发下一批 contracts。
-10. workers 写回 handoff、artifacts、validation outputs；Evaluator 与 Recovery 再决定 acceptance、followup、replan、checkpoint。
+9. 可选地编译 `Project Dossier / Project Book` 供人类阅读，但不参与 runtime 决策。
+10. 由 Orchestrator 基于 ready set 派发下一批 contracts。
+11. workers 写回 handoff、artifacts、validation outputs；Evaluator 与 Recovery 再决定 acceptance、followup、replan、checkpoint。
 
 ## Mermaid
 
@@ -135,6 +144,7 @@ flowchart TD
 - 用户一句话直接进入 execution worker。
 - 只做 research，不把 evidence 编译成 spec / plan。
 - 只写一份长文档，不形成 `Task Graph` 和 `Run Contract`。
+- 把 `Project Dossier / Project Book` 当作调度输入，而不是人类可读派生视图。
 - 让 worker 自己从模糊目标自由扩写成项目计划并直接开始执行。
 - 把未采纳的候选方案直接塞进运行态约束。
 

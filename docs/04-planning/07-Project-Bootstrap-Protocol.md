@@ -14,6 +14,7 @@
 - vNext 中 `Task Spec` 将进一步标准化为角色感知的 `Run Contract`；见 `../05-execution/15-Agent-Role-Topology-and-Run-Contract.md`。
 - Research Sprint、Evidence Pack、Brief、Charter、Execution Plan 的对象细节仍以各自文档为准。
 - Requirement Ledger 的覆盖判断见 `./08-Requirement-Ledger-and-Coverage-Model.md`。
+- `Project Dossier / Project Book` 的编译细节见 `./11-Project-Dossier-Compilation-Protocol.md`。
 
 ## Definitions
 
