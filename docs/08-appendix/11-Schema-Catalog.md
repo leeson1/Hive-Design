@@ -10,6 +10,7 @@
 
 - 本文是 schema catalog，不是数据库 DDL。
 - 具体枚举与命名规则以 `../03-state-model/06-Canonical-Enums-and-Identifiers.md` 为准。
+- vNext durable compiled artifacts 与 pointer extension 的最小 schema 见 `15-vNext-Compiled-Artifact-Schema-Catalog.md`。
 
 ## Schema Format
 
@@ -38,6 +39,8 @@ Directive:
     impact_scope: object
     decision: string
     superseded_by_directive_id: string
+    evidence_pack_refs: array
+    research_artifact_refs: array
   enums:
     status: [created, assessing, applied, escalated, superseded, archived]
 ```
@@ -58,6 +61,10 @@ PlanRevision:
     phase_ids: array
     superseded_task_ids: array
     new_task_ids: array
+    product_spec_ref: string
+    execution_package_ref: string
+    task_graph_ref: string
+    active_dossier_ref: string
   enums:
     status: [draft, compiled, active, superseded, archived]
 ```
@@ -239,6 +246,7 @@ Checkpoint:
     active_lock_ids: array
     open_issue_ids: array
     pending_decision_ids: array
+    active_artifact_refs: array
   enums:
     status: [written, superseded, archived]
 ```
@@ -264,11 +272,18 @@ Event:
       - UserInputReceived
       - RuntimeDirectiveCreated
       - ResearchRequested
+      - ResearchSprintCompiled
+      - EvidencePackCompiled
+      - ProductSpecCompiled
+      - ExecutionPackageCompiled
       - PlanCompiled
       - PlanRevised
       - TaskCreated
       - TaskQualified
+      - TaskGraphCompiled
       - DispatchPrepared
+      - RunContractCompiled
+      - SessionScaffoldCompiled
       - TaskDispatched
       - TaskRequeued
       - TaskBlocked
@@ -292,6 +307,7 @@ Event:
       - LockConflictDetected
       - LockRecoveryHeld
       - LockReleased
+      - ProjectDossierCompiled
       - CheckpointWritten
       - ContextResetRequested
       - RecoveryStarted
@@ -340,6 +356,8 @@ DispatchIntent:
     lock_request_set: array
     capability_profile_ref: string
     side_effect_token_id: string
+    run_contract_ref: string
+    session_scaffold_ref: string
   enums:
     status: [prepared, launched, superseded, cancelled]
 ```

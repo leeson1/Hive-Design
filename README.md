@@ -33,6 +33,8 @@ Hive 是一个面向外部执行器的控制平面设计仓。它当前同时承
 
 - 用户一句话如何先进入 research / evidence / spec / task graph / run contract，而不是直接扔给执行 agent
 - 同类仓库 / benchmark repo 调研如何受控进入 research，并被编译为 evidence
+- `Product Spec / Execution Package / Task Graph / Run Contract / Session Scaffold` 如何作为 durable compiled artifacts 被持久化并挂到 `PlanRevision / DispatchIntent`
+- 这条编译链如何做 freshness、失效判定、selective recompile 与 active pointer 切换
 - 面向人阅读的 `Project Dossier / Project Book` 如何从结构化对象编译出来，而不是反向成为事实源
 - 新 session 应先读取哪些 scaffold artifacts，才能在 reset / worker replacement 后快速恢复定向
 - Hive 如何并行协调 Planner、Research、Execution、Evaluator、Recovery 这些角色
@@ -67,10 +69,13 @@ Hive 是一个面向外部执行器的控制平面设计仓。它当前同时承
 2. [09-Input-to-Spec-and-TaskGraph-Pipeline.md](/Users/leeson/codes/docker_workspace/Hive-Design/docs/04-planning/09-Input-to-Spec-and-TaskGraph-Pipeline.md)
 3. [10-Benchmark-Repo-Research-Protocol.md](/Users/leeson/codes/docker_workspace/Hive-Design/docs/04-planning/10-Benchmark-Repo-Research-Protocol.md)
 4. [11-Project-Dossier-Compilation-Protocol.md](/Users/leeson/codes/docker_workspace/Hive-Design/docs/04-planning/11-Project-Dossier-Compilation-Protocol.md)
-5. [15-Agent-Role-Topology-and-Run-Contract.md](/Users/leeson/codes/docker_workspace/Hive-Design/docs/05-execution/15-Agent-Role-Topology-and-Run-Contract.md)
-6. [16-Executor-Session-Scaffold-Profile.md](/Users/leeson/codes/docker_workspace/Hive-Design/docs/05-execution/16-Executor-Session-Scaffold-Profile.md)
-7. [14-Context-Reset-and-Session-Handoff-Protocol.md](/Users/leeson/codes/docker_workspace/Hive-Design/docs/07-reliability/14-Context-Reset-and-Session-Handoff-Protocol.md)
-8. [15-User-Interrupt-Replan-and-Preemption-Protocol.md](/Users/leeson/codes/docker_workspace/Hive-Design/docs/07-reliability/15-User-Interrupt-Replan-and-Preemption-Protocol.md)
-9. [16-Run-Termination-and-Reassignment-Matrix.md](/Users/leeson/codes/docker_workspace/Hive-Design/docs/07-reliability/16-Run-Termination-and-Reassignment-Matrix.md)
+5. [08-vNext-Compiled-Artifact-Package.md](/Users/leeson/codes/docker_workspace/Hive-Design/docs/03-state-model/08-vNext-Compiled-Artifact-Package.md)
+6. [12-Compilation-Lifecycle-and-Freshness-Protocol.md](/Users/leeson/codes/docker_workspace/Hive-Design/docs/04-planning/12-Compilation-Lifecycle-and-Freshness-Protocol.md)
+7. [15-Agent-Role-Topology-and-Run-Contract.md](/Users/leeson/codes/docker_workspace/Hive-Design/docs/05-execution/15-Agent-Role-Topology-and-Run-Contract.md)
+8. [16-Executor-Session-Scaffold-Profile.md](/Users/leeson/codes/docker_workspace/Hive-Design/docs/05-execution/16-Executor-Session-Scaffold-Profile.md)
+9. [14-Context-Reset-and-Session-Handoff-Protocol.md](/Users/leeson/codes/docker_workspace/Hive-Design/docs/07-reliability/14-Context-Reset-and-Session-Handoff-Protocol.md)
+10. [15-User-Interrupt-Replan-and-Preemption-Protocol.md](/Users/leeson/codes/docker_workspace/Hive-Design/docs/07-reliability/15-User-Interrupt-Replan-and-Preemption-Protocol.md)
+11. [16-Run-Termination-and-Reassignment-Matrix.md](/Users/leeson/codes/docker_workspace/Hive-Design/docs/07-reliability/16-Run-Termination-and-Reassignment-Matrix.md)
+12. [15-vNext-Compiled-Artifact-Schema-Catalog.md](/Users/leeson/codes/docker_workspace/Hive-Design/docs/08-appendix/15-vNext-Compiled-Artifact-Schema-Catalog.md)
 
 详细目录、版本分层和路径兼容说明见 [docs/README.md](/Users/leeson/codes/docker_workspace/Hive-Design/docs/README.md)。

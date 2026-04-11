@@ -53,7 +53,7 @@ flowchart LR
 | 类别 | 内容 |
 |---|---|
 | 当前已收敛 | single writer、single repo、single adapter、`SQLite + filesystem`、acceptance 独立于 worker、`launch_run` 只写 side effect token、Orchestrator 非常驻 |
-| 下一阶段要补 | input-to-spec pipeline、Planner / Research / Execution / Evaluator role topology、run contract、user interrupt protocol、context reset handoff protocol |
+| 下一阶段要补 | input-to-spec pipeline、compiled artifact package / freshness protocol、Planner / Research / Execution / Evaluator role topology、run contract、user interrupt protocol、context reset handoff protocol |
 | 明确不做 | distributed multi-writer、multi-repo federation、complex policy engine、rich UI / dashboard、full approval workflow |
 
 ### 推荐团队分工
@@ -133,6 +133,7 @@ flowchart LR
   - Phase 0..6 已经稳定，MVP 闭环可重复验证。
 - 产出
   - `04-planning/09-Input-to-Spec-and-TaskGraph-Pipeline.md` 对应的对象与协议实现设计。
+  - `03-state-model/08-vNext-Compiled-Artifact-Package.md`、`04-planning/12-Compilation-Lifecycle-and-Freshness-Protocol.md`、`08-appendix/15-vNext-Compiled-Artifact-Schema-Catalog.md` 对应的持久化与编译生命周期设计。
 
 ### Post-MVP Design Track B：角色拓扑与 run contract
 

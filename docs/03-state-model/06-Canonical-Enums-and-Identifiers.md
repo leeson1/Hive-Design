@@ -56,6 +56,15 @@
 | `changeset_id` | `cs_` | `cs_20260410_0001` |
 | `dispatch_intent_id` | `dispatch_` | `dispatch_task_auth_backend_07_01` |
 | `recovery_action_id` | `recovery_` | `recovery_run_codex_003_01` |
+| `research_sprint_id` | `rs_` | `rs_20260411_01` |
+| `evidence_pack_id` | `ep_` | `ep_20260411_02` |
+| `product_spec_id` | `spec_` | `spec_20260411_01` |
+| `execution_package_id` | `exec_pkg_` | `exec_pkg_20260411_01` |
+| `task_graph_id` | `tg_` | `tg_20260411_01` |
+| `run_contract_id` | `rc_` | `rc_20260411_04` |
+| `dossier_id` | `dossier_` | `dossier_20260411_01` |
+| `scaffold_id` | `scaffold_` | `scaffold_20260411_04` |
+| `compilation_batch_id` | `compile_` | `compile_20260411_07` |
 
 ### Legacy Forms to Avoid
 
@@ -198,6 +207,22 @@
 - `superseded`
 - `archived`
 
+### CompiledArtifact.status
+
+- `compiled`
+- `active`
+- `superseded`
+- `stale`
+- `failed`
+- `archived`
+
+### CompilationBatch.status
+
+- `compiled`
+- `partial`
+- `failed`
+- `archived`
+
 ## Canonical Event Registry
 
 ### Input and Planning Events
@@ -205,14 +230,21 @@
 - `UserInputReceived`
 - `RuntimeDirectiveCreated`
 - `ResearchRequested`
+- `ResearchSprintCompiled`
+- `EvidencePackCompiled`
+- `ProductSpecCompiled`
+- `ExecutionPackageCompiled`
 - `PlanCompiled`
 - `PlanRevised`
 - `TaskCreated`
 - `TaskQualified`
+- `TaskGraphCompiled`
 
 ### Dispatch and Run Events
 
 - `DispatchPrepared`
+- `RunContractCompiled`
+- `SessionScaffoldCompiled`
 - `TaskDispatched`
 - `TaskRequeued`
 - `TaskBlocked`
@@ -245,6 +277,7 @@
 
 ### Recovery and Checkpoint Events
 
+- `ProjectDossierCompiled`
 - `CheckpointWritten`
 - `ContextResetRequested`
 - `RecoveryStarted`
@@ -264,17 +297,25 @@
 - `issue_id`
 - `lock_id`
 - `checkpoint_id`
+- `dispatch_intent_id`
+- `recovery_action_id`
+- `compilation_batch_id`
 - `event_id`
 - `changeset_id`
 
 ### Canonical Common Fields
 
 - `status`
+- `artifact_type`
 - `created_at`
 - `updated_at`
 - `occurred_at`
+- `compiled_at`
 - `correlation_id`
 - `caused_by_event_id`
+- `payload_ref`
+- `compiled_from_refs`
+- `superseded_by_ref`
 - `artifact_refs`
 - `log_refs`
 - `validation_results`

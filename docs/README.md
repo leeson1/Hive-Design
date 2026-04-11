@@ -29,7 +29,7 @@
 | 层级 | 目标 | 当前状态 | 典型文档 |
 |---|---|---|---|
 | Layer 1 | 收敛第一个可实现的 Hive 控制平面 | 已收敛为实现前设计包 | `00-overview/03`、`03-state-model/07`、`05-execution/11`、`05-execution/14` |
-| Layer 2 | 定义长期自治多-agent harness 的目标架构 | 本次升级新增总纲与协议 | `00-overview/05`、`04-planning/09`、`04-planning/10`、`04-planning/11`、`05-execution/15`、`05-execution/16`、`07-reliability/14`、`07-reliability/15`、`07-reliability/16` |
+| Layer 2 | 定义长期自治多-agent harness 的目标架构 | 主协议已收敛，进入实现前收口 | `00-overview/05`、`03-state-model/08`、`04-planning/09`、`04-planning/10`、`04-planning/11`、`04-planning/12`、`05-execution/15`、`05-execution/16`、`07-reliability/14`、`07-reliability/15`、`07-reliability/16` |
 | Layer 3 | 明确不在当前阶段扩展的方向 | 明确排除 | multi-writer、multi-repo、复杂 policy engine、rich UI、完整人工审批 |
 
 ### 总体边界
@@ -66,11 +66,13 @@
 2. `04-planning/09-Input-to-Spec-and-TaskGraph-Pipeline.md`
 3. `04-planning/10-Benchmark-Repo-Research-Protocol.md`
 4. `04-planning/11-Project-Dossier-Compilation-Protocol.md`
-5. `05-execution/15-Agent-Role-Topology-and-Run-Contract.md`
-6. `05-execution/16-Executor-Session-Scaffold-Profile.md`
-7. `07-reliability/14-Context-Reset-and-Session-Handoff-Protocol.md`
-8. `07-reliability/15-User-Interrupt-Replan-and-Preemption-Protocol.md`
-9. `07-reliability/16-Run-Termination-and-Reassignment-Matrix.md`
+5. `03-state-model/08-vNext-Compiled-Artifact-Package.md`
+6. `04-planning/12-Compilation-Lifecycle-and-Freshness-Protocol.md`
+7. `05-execution/15-Agent-Role-Topology-and-Run-Contract.md`
+8. `05-execution/16-Executor-Session-Scaffold-Profile.md`
+9. `07-reliability/14-Context-Reset-and-Session-Handoff-Protocol.md`
+10. `07-reliability/15-User-Interrupt-Replan-and-Preemption-Protocol.md`
+11. `07-reliability/16-Run-Termination-and-Reassignment-Matrix.md`
 
 ### 第三遍：按专题补细节
 
@@ -81,8 +83,9 @@
 5. `04-planning/07-Project-Bootstrap-Protocol.md`
 6. `04-planning/08-Requirement-Ledger-and-Coverage-Model.md`
 7. `05-execution/10-Worker-Session-Bootstrap-Checklist.md`
-8. `07-reliability/04-Incremental-Progress-Discipline.md`
-9. `07-reliability/09-Context-Reset-and-Session-Continuity.md`
+8. `08-appendix/15-vNext-Compiled-Artifact-Schema-Catalog.md`
+9. `07-reliability/04-Incremental-Progress-Discipline.md`
+10. `07-reliability/09-Context-Reset-and-Session-Continuity.md`
 
 ## 目录结构
 
@@ -114,7 +117,8 @@ docs/
 │   ├── 04-plan-versioning-and-supersession.md
 │   ├── 05-task-graph-model.md
 │   ├── 06-Canonical-Enums-and-Identifiers.md
-│   └── 07-MVP-Object-Package.md
+│   ├── 07-MVP-Object-Package.md
+│   └── 08-vNext-Compiled-Artifact-Package.md
 ├── 04-planning/
 │   ├── 01-Project-Charter-规范.md
 │   ├── 02-Execution-Plan-规范.md
@@ -126,7 +130,8 @@ docs/
 │   ├── 08-Requirement-Ledger-and-Coverage-Model.md
 │   ├── 09-Input-to-Spec-and-TaskGraph-Pipeline.md
 │   ├── 10-Benchmark-Repo-Research-Protocol.md
-│   └── 11-Project-Dossier-Compilation-Protocol.md
+│   ├── 11-Project-Dossier-Compilation-Protocol.md
+│   └── 12-Compilation-Lifecycle-and-Freshness-Protocol.md
 ├── 05-execution/
 │   ├── 00-Agent-Session-Protocol.md
 │   ├── 01-任务准入规则.md
@@ -183,7 +188,8 @@ docs/
     ├── 11-Schema-Catalog.md
     ├── 12-Command-and-ChangeSet-Examples.md
     ├── 13-ADR-Index.md
-    └── 14-MVP-Repo-Layout.md
+    ├── 14-MVP-Repo-Layout.md
+    └── 15-vNext-Compiled-Artifact-Schema-Catalog.md
 ```
 
 ## Design Notes
@@ -199,16 +205,12 @@ docs/
 - `launch_run` 只能写 launch markers / side effect token。
 - MVP 仍维持单仓库、单 writer、单 active plan revision、单 adapter profile、`SQLite + filesystem`。
 
-### 下一阶段要补齐的内容
+### 仍留给后续实现与验证的内容
 
-- 一句话输入到 `Research Sprint -> Evidence Pack -> Product Spec -> Execution Plan -> Task Graph -> Run Contract` 的编译链
-- benchmark repo research 如何受控进入 `Evidence Pack`
-- `Project Dossier / Project Book` 如何从结构化对象编译为人类长文档
-- Planner / Research / Execution / Evaluator / Recovery 的角色拓扑
-- session scaffold artifacts 如何在 reset / replacement 后帮助 worker get bearings
-- 用户运行中插话的 impact analysis、preemption、replan 和 supersession 协议
-- context reset 的 reset trigger、gate、handoff artifact、恢复最小上下文协议
-- run termination / reassignment 在 adapter 能力不确定时的统一降级矩阵
+- 把 `Product Spec / Execution Package / Task Graph / Run Contract / Session Scaffold / Dossier` 从设计协议落到实现仓 schema、compiler、validator 和 storage metadata。
+- 验证 `restore_run`、`soft_cancel`、`hard_kill fidelity`、heartbeat observability 等 executor 能力，决定哪些能从 best-effort 升级为调度层依赖。
+- 为 compiled artifacts 补模板生成器、read model 和最小测试夹具，但不改变 truth hierarchy。
+- 补实现前 ADR / spike：artifact ref URI 规范、metadata row 与 payload root 的目录布局、编译批次与 change-set 的事务边界。
 
 ### 明确不进入当前阶段的内容
 

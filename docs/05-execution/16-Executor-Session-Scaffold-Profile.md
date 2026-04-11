@@ -10,6 +10,8 @@
 
 - 本文覆盖 session scaffold artifacts 的最小集合、刷新时机、与 authoritative objects 的关系。
 - 本文不替代 `Checkpoint`、`Handoff`、`Requirement Ledger`、`TaskSpec` 等 authoritative 或 protocol-level objects。
+- durable carrier 与 pointer 挂载方式见 `../03-state-model/08-vNext-Compiled-Artifact-Package.md`。
+- freshness gate 与 selective recompile 见 `../04-planning/12-Compilation-Lifecycle-and-Freshness-Protocol.md`。
 - Worker bootstrap 顺序见 `10-Worker-Session-Bootstrap-Checklist.md`。
 - context reset handoff 见 `../07-reliability/14-Context-Reset-and-Session-Handoff-Protocol.md`。
 
@@ -29,6 +31,12 @@
 - session scaffold artifacts 只是 bootstrap input，不是 runtime truth。
 - 若 scaffold 与 authoritative object state 冲突，必须以 `Checkpoint / PlanRevision / Requirement Ledger / TaskSpec / Handoff` 为准。
 - scaffold 缺失或过期时，worker 必须回退到 authoritative objects，不得凭 scaffold 猜测。
+
+### Canonical Carrier Rule
+
+- durable 形态中的 session scaffold 应由 `SessionScaffoldArtifact` 承载。
+- canonical pointer 应挂在 `DispatchIntent.session_scaffold_ref`，并与 `run_contract_ref` 成对出现。
+- `SessionScaffoldArtifact` 的 payload 可细分为多个子文档，但 metadata row 必须能独立表达 freshness、lineage 和 supersession。
 
 ### 最小脚手架产物集合
 

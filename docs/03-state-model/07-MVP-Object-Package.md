@@ -11,6 +11,7 @@
 - 本文只覆盖 first implementation 的对象包。
 - 本文不重写全量对象模型；Research Sprint、Evidence Pack、Brief、Decision、Artifact 等保留在协议层，但不进入首版核心对象包。
 - vNext 中新增的 `Product Spec`、`Run Contract`、更完整的 planning artifacts 仍先作为协议层或编译产物存在；即使下一阶段把它们持久化，也不会替代当前 `PlanRevision / Task / AgentRun` 这一组 authoritative runtime objects。
+- vNext compiled artifact package 的落位方式见 `08-vNext-Compiled-Artifact-Package.md`。
 - canonical 命名、状态枚举、ID 前缀以 `./06-Canonical-Enums-and-Identifiers.md` 为准。
 - change-set / event 语义以 `../06-coordination/03-Change-Set-and-Outbox-Contract.md` 与 `./03-event-model.md` 为准。
 
@@ -616,4 +617,4 @@ ChangeSet:
 - [x] 已给出对象依赖表、authoritative vs derived 分类表和 required-only schema 样例。
 - [x] 已明确哪些对象在首版只保留为嵌套字段或引用，不作为一等对象建表。
 - [ ] 仍需后续 ADR / spike 验证：JSON 列细分策略、referential integrity 在 SQLite 中的具体实现方式、artifact ref URI 规范。
-- [ ] 明确不进入首版实现：Research Sprint、Evidence Pack、Decision、Artifact 一等对象化。
+- [x] 已明确不进入首版实现：Research Sprint、Evidence Pack、Decision、Artifact 一等对象化；其 vNext durable compiled artifact 形态另见 `08-vNext-Compiled-Artifact-Package.md`。
