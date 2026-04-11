@@ -10,6 +10,7 @@
 
 - 本文只覆盖 first implementation 的对象包。
 - 本文不重写全量对象模型；Research Sprint、Evidence Pack、Brief、Decision、Artifact 等保留在协议层，但不进入首版核心对象包。
+- vNext 中新增的 `Product Spec`、`Run Contract`、更完整的 planning artifacts 仍先作为协议层或编译产物存在；即使下一阶段把它们持久化，也不会替代当前 `PlanRevision / Task / AgentRun` 这一组 authoritative runtime objects。
 - canonical 命名、状态枚举、ID 前缀以 `./06-Canonical-Enums-and-Identifiers.md` 为准。
 - change-set / event 语义以 `../06-coordination/03-Change-Set-and-Outbox-Contract.md` 与 `./03-event-model.md` 为准。
 
@@ -46,11 +47,24 @@
 - `Research Sprint`
 - `Evidence Pack`
 - `Brief`
+- `Product Spec`
 - `Execution Plan` 独立实体
+- `Run Contract`
 - `Decision`
 - `Artifact`
 
 这些对象或概念在首版中只作为输入引用、fixture 或嵌套字段存在，不单独建 authoritative table。
+
+补充说明：
+
+- 这不表示 vNext 不需要它们，而是表示当前 MVP 不把这些 planning / handoff artifacts 作为一等 runtime truth tables。
+- 下一阶段若为 `Product Spec` 或 `Run Contract` 增加 durable compiled artifact，也必须保持当前事实层级不变：
+  - 当前事实仍读对象表
+  - Event Log 仍是历史
+  - Checkpoint 仍是恢复快照
+
+- `Requirement Ledger` 是首轮闭环必需的协议结构，但在当前 MVP object package 中可先作为 `PlanRevision` 附属结构或独立 ledger 文档引用实现。
+- 也就是说，ledger 在语义上是 authoritative planning state 的一部分，但首版不强制要求把它拆成独立一等对象表。
 
 ### 对象依赖图
 

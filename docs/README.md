@@ -1,42 +1,85 @@
-# Hive 设计文档总纲（MVP Implementation Package Draft v0.6）
+# Hive 设计文档总纲
 
-> 目标：把 Hive 从“implementation contract draft”继续收敛为“first implementation 可直接开工的实现前设计包”，回答首版控制平面的目录结构、对象包、handler 映射、黄金路径、失败补偿和分阶段开工方式。
+## Purpose
 
-## 1. 文档使用方式
+- 说明本仓库当前承载的两层设计：`MVP implementation package` 与 `vNext long-running autonomous harness`。
+- 给出推荐阅读顺序、目录地图和分层边界。
+- 明确哪些内容已经收敛、哪些是下一阶段目标、哪些明确不进入当前阶段。
+
+## Scope
 
 - `docs/` 是 Hive 的主设计文档目录。
-- 文档分为三层：
-  - 原则层：系统定位、工程法则、角色边界
-  - 协议层：对象、事件、计划编译、执行、恢复、验收、调度、实现蓝图
-  - 模板层：schema、模板、事件示例、ADR、repo layout
-- 阅读时优先看协议层中的实现蓝图章节，原则层用于理解边界，模板层用于生成实现骨架与测试夹具。
+- 本目录同时服务两类读者：
+  - 正在准备实现第一个 Hive 控制平面原型仓的工程师
+  - 正在规划 Hive 下一阶段长期自治多-agent harness 的架构设计者
+- 本文不替代对象模型、命令协议、执行器契约、恢复协议等分卷。
 
-## 2. 建议阅读顺序
+## Definitions
 
-1. `00-overview`：文档地图、总体架构、参考架构、MVP 实现蓝图、分阶段实施计划、工程法则
-   - 先读 `engineering-laws.md`
-   - 再读 `01-Hive-Overall-Architecture.md`
-   - 再读 `02-Reference-Architecture.md`
-   - 再读 `03-MVP-Implementation-Blueprint.md`
-   - 再读 `04-Phased-Implementation-Plan.md`
-   - 再读 `00-文档地图.md`
-2. `01-foundation`：系统定位、原则、总体思想框架
-3. `02-governance`：角色边界、决策路由、Orchestrator 运行模型
-4. `03-state-model`：核心对象、状态迁移、事件模型、Plan Revision、Task Graph、canonical enums / identifiers、MVP 对象包
-   - 先读 `06-Canonical-Enums-and-Identifiers.md`
-   - 再读 `07-MVP-Object-Package.md`
-5. `04-planning`：Research Sprint、Evidence Pack、Brief / Charter / Execution Plan 编译链
-6. `06-coordination`：状态对象、目录语义、一致性边界、change-set / outbox、MVP storage backend profile
-7. `05-execution`：Session、Task、Worker、AgentRun、执行器适配、能力矩阵、API contract、first executor profile、command handler mapping、执行器验证计划
-   - 先读 `11-Control-Plane-API-Contract.md`
-   - 再读 `14-Command-Handler-Blueprint.md`
-8. `07-reliability`：Checkpoint、Acceptance、Reconcile Loop、Golden Path、Recovery Checklist、MVP 控制平面、worker blueprint、conformance test strategy
-   - 先读 `09-End-to-End-Sequence-Scenarios.md`
-   - 再读 `11-Minimum-Viable-Control-Plane.md`
-   - 再读 `13-Conformance-Test-Strategy.md`
-9. `08-appendix`：schema catalog、命令示例、事件示例、状态迁移总表、ADR、MVP repo layout
+- `Layer 1 / MVP Control Plane`：当前最接近实现的首版控制平面设计包。
+- `Layer 2 / vNext Harness Design`：下一阶段长期自治多-agent 调度控制平面设计。
+- `Layer 3 / Explicitly Out of Scope`：明确不进入当前阶段的方向。
+- `Worker`：外部执行器角色实例，例如 `Codex`、`Claude Code`。
+- `Steering Input`：用户运行中补充的目标、约束、优先级或纠偏输入。
 
-## 3. 目录结构
+## Rules
+
+### 文档分层
+
+| 层级 | 目标 | 当前状态 | 典型文档 |
+|---|---|---|---|
+| Layer 1 | 收敛第一个可实现的 Hive 控制平面 | 已收敛为实现前设计包 | `00-overview/03`、`03-state-model/07`、`05-execution/11`、`05-execution/14` |
+| Layer 2 | 定义长期自治多-agent harness 的目标架构 | 本次升级新增总纲与协议 | `00-overview/05`、`04-planning/09`、`05-execution/15`、`07-reliability/14`、`07-reliability/15` |
+| Layer 3 | 明确不在当前阶段扩展的方向 | 明确排除 | multi-writer、multi-repo、复杂 policy engine、rich UI、完整人工审批 |
+
+### 总体边界
+
+- Hive 是控制平面，不是通用 agent。
+- Hive 不直接“自己做任务”，而是协调外部执行器完成研究、规划、执行、验证等工作。
+- 连续性来自对象状态、事件、checkpoint、handoff artifacts，而不是超长上下文。
+- `authoritative object state` 是当前事实来源。
+- `Event Log` 是历史与 replay 输入，不是当前事实源。
+- `Checkpoint` 是恢复快照，不是事实源。
+- acceptance 必须独立于 worker 自报完成。
+- `launch_run` 只能写 side effect token / launch markers，不能伪造最终成功状态。
+
+## 建议阅读顺序
+
+### 第一遍：先理解当前 MVP 控制平面
+
+1. `00-overview/01-Hive-Overall-Architecture.md`
+2. `00-overview/02-Reference-Architecture.md`
+3. `00-overview/03-MVP-Implementation-Blueprint.md`
+4. `00-overview/04-Phased-Implementation-Plan.md`
+5. `02-governance/03-Drone-Operating-Model.md`
+6. `03-state-model/07-MVP-Object-Package.md`
+7. `05-execution/11-Control-Plane-API-Contract.md`
+8. `05-execution/13-First-Executor-Profile.md`
+9. `05-execution/14-Command-Handler-Blueprint.md`
+10. `07-reliability/07-Runtime-Directive-Handling.md`
+11. `07-reliability/09-End-to-End-Sequence-Scenarios.md`
+12. `07-reliability/11-Minimum-Viable-Control-Plane.md`
+
+### 第二遍：再看 vNext 长期自治多-agent harness
+
+1. `00-overview/05-Hive-vNext-Long-Running-Agent-Harness.md`
+2. `04-planning/09-Input-to-Spec-and-TaskGraph-Pipeline.md`
+3. `05-execution/15-Agent-Role-Topology-and-Run-Contract.md`
+4. `07-reliability/14-Context-Reset-and-Session-Handoff-Protocol.md`
+5. `07-reliability/15-User-Interrupt-Replan-and-Preemption-Protocol.md`
+
+### 第三遍：按专题补细节
+
+1. `04-planning/03-research-sprint-spec.md`
+2. `04-planning/04-evidence-pack-spec.md`
+3. `04-planning/05-plan-compilation-protocol.md`
+4. `04-planning/06-task-graph-compilation.md`
+5. `04-planning/07-Project-Bootstrap-Protocol.md`
+6. `04-planning/08-Requirement-Ledger-and-Coverage-Model.md`
+7. `07-reliability/04-Incremental-Progress-Discipline.md`
+8. `07-reliability/09-Context-Reset-and-Session-Continuity.md`
+
+## 目录结构
 
 ```text
 docs/
@@ -47,6 +90,7 @@ docs/
 │   ├── 02-Reference-Architecture.md
 │   ├── 03-MVP-Implementation-Blueprint.md
 │   ├── 04-Phased-Implementation-Plan.md
+│   ├── 05-Hive-vNext-Long-Running-Agent-Harness.md
 │   ├── design-principles.md
 │   └── engineering-laws.md
 ├── 01-foundation/
@@ -72,7 +116,10 @@ docs/
 │   ├── 03-research-sprint-spec.md
 │   ├── 04-evidence-pack-spec.md
 │   ├── 05-plan-compilation-protocol.md
-│   └── 06-task-graph-compilation.md
+│   ├── 06-task-graph-compilation.md
+│   ├── 07-Project-Bootstrap-Protocol.md
+│   ├── 08-Requirement-Ledger-and-Coverage-Model.md
+│   └── 09-Input-to-Spec-and-TaskGraph-Pipeline.md
 ├── 05-execution/
 │   ├── 00-Agent-Session-Protocol.md
 │   ├── 01-任务准入规则.md
@@ -85,10 +132,12 @@ docs/
 │   ├── 08-handoff-artifact-contract.md
 │   ├── 09-Executor-Capability-Matrix.md
 │   ├── 10-Lock-Manager-and-Stale-Lock-Recovery.md
+│   ├── 10-Worker-Session-Bootstrap-Checklist.md
 │   ├── 11-Control-Plane-API-Contract.md
 │   ├── 12-Executor-Validation-Plan.md
 │   ├── 13-First-Executor-Profile.md
-│   └── 14-Command-Handler-Blueprint.md
+│   ├── 14-Command-Handler-Blueprint.md
+│   └── 15-Agent-Role-Topology-and-Run-Contract.md
 ├── 06-coordination/
 │   ├── 01-文件系统协同规则.md
 │   ├── 02-Consistency-and-Transaction-Boundaries.md
@@ -103,11 +152,14 @@ docs/
 │   ├── 06-Orchestrator-Reconcile-Loop.md
 │   ├── 07-Runtime-Directive-Handling.md
 │   ├── 08-Recovery-Reconciliation-Checklist.md
+│   ├── 09-Context-Reset-and-Session-Continuity.md
 │   ├── 09-End-to-End-Sequence-Scenarios.md
 │   ├── 10-Invariants-and-Conformance-Rules.md
 │   ├── 11-Minimum-Viable-Control-Plane.md
 │   ├── 12-Reconcile-Worker-and-Event-Processor-Blueprint.md
-│   └── 13-Conformance-Test-Strategy.md
+│   ├── 13-Conformance-Test-Strategy.md
+│   ├── 14-Context-Reset-and-Session-Handoff-Protocol.md
+│   └── 15-User-Interrupt-Replan-and-Preemption-Protocol.md
 └── 08-appendix/
     ├── 01-术语表.md
     ├── 02-模板索引.md
@@ -125,46 +177,42 @@ docs/
     └── 14-MVP-Repo-Layout.md
 ```
 
-## 4. 阅读分层说明
+## Design Notes
 
-### 原则层
-
-- `00-overview/`
-- `01-foundation/`
-- `02-governance/01-角色职责矩阵.md`
-- `02-governance/02-决策分流规则.md`
-
-### 协议层
-
-- `02-governance/03-Drone-Operating-Model.md`
-- `03-state-model/`
-- `04-planning/`
-- `05-execution/`
-- `06-coordination/`
-- `07-reliability/`
-
-### 模板层
-
-- `08-appendix/`
-
-## 5. 当前文档重点
+### 当前已经收敛的内容
 
 - Hive 是控制平面，不是通用 agent。
-- Orchestrator 是事件驱动状态机，不是长驻大模型会话。
-- Worker 是可丢弃执行单元，不是事实来源。
-- Task、AgentRun、Handoff、Acceptance、Checkpoint 必须分离建模。
-- Event Log、Object State、Checkpoint 已有明确层级：当前事实、历史、恢复快照。
-- canonical enums、event names、field names、ID prefixes 已集中到单一 registry。
-- change-set / outbox 已收敛为控制平面的核心持久化协议。
-- 当前重点不再是泛化概念，而是收敛实现前设计包：
-  - `03-MVP-Implementation-Blueprint.md`
-  - `04-Phased-Implementation-Plan.md`
-  - `03-state-model/07-MVP-Object-Package.md`
-  - `05-execution/14-Command-Handler-Blueprint.md`
-  - `07-reliability/09-End-to-End-Sequence-Scenarios.md`
-- 项目连续性来自外部状态，不来自超长上下文。
+- Orchestrator 是事件驱动、非常驻、可退出、可从外部状态重建的状态推进器。
+- authoritative object state 是当前事实来源。
+- Event Log 是历史与 replay 输入，不是当前事实源。
+- Checkpoint 是恢复快照，不是事实源。
+- acceptance 独立于 worker 自报完成。
+- `launch_run` 只能写 launch markers / side effect token。
+- MVP 仍维持单仓库、单 writer、单 active plan revision、单 adapter profile、`SQLite + filesystem`。
 
-## 6. 路径兼容说明
+### 下一阶段要补齐的内容
 
-- `02-governance/03-Drone-Operating-Model.md` 保留旧文件名以保持路径连续性。
-- 该文件正文已统一使用 `Orchestrator`，`Drone` 仅作为历史命名保留在路径层。
+- 一句话输入到 `Research Sprint -> Evidence Pack -> Product Spec -> Execution Plan -> Task Graph -> Run Contract` 的编译链
+- Planner / Research / Execution / Evaluator / Recovery 的角色拓扑
+- 用户运行中插话的 impact analysis、preemption、replan 和 supersession 协议
+- context reset 的 reset trigger、gate、handoff artifact、恢复最小上下文协议
+
+### 明确不进入当前阶段的内容
+
+- multi-writer distributed control plane
+- multi-repo federation
+- 复杂 policy engine
+- rich UI / dashboard
+- 完整人工审批工作流
+
+## 路径兼容说明
+
+- `02-governance/03-Drone-Operating-Model.md` 保留旧文件名，但正文统一使用 `Orchestrator`。
+- `Queen` 若在旧路径或旧文档中出现，只表示升级/裁决职责，不表示一个魔法角色或长驻大 agent。
+- `09-Context-Reset-and-Session-Continuity.md` 保留为连续性概览；完整协议以 `14-Context-Reset-and-Session-Handoff-Protocol.md` 为准。
+
+## Acceptance Criteria
+
+- 新读者能在 5 分钟内看懂本仓库为什么分成 Layer 1、Layer 2、Layer 3。
+- 新读者能明确知道先看 MVP，再看 vNext。
+- 读者能明确知道 Hive 协调外部执行器，而不是把所有智能塞进单个模型会话。

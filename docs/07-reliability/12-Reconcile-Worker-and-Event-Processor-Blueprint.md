@@ -11,6 +11,17 @@
 - 本文面向 MVP 单 writer、单进程 runtime。
 - 本文不改变 `reconcile_once(...)`、`start_recovery(...)`、`run_acceptance(...)` 等命令语义。
 - 控制平面对象与事件语义仍以既有章节为准。
+- Context reset 与 session continuity 见 `./09-Context-Reset-and-Session-Continuity.md`。
+
+## Rules
+
+### 责任边界规则
+
+- `Event Processor` 只处理 outbox publish、event append、cursor 推进，不推导业务结论。
+- `Reconcile Worker` 只负责决定下一轮要调用哪些 handler，不直接绕过 handler 写最终业务状态。
+- `Recovery Worker` 负责处理异常与歧义，不负责重写计划输入。
+- `Executor Adapter Layer` 负责把外部执行器行为标准化，不负责 `Task` 完成判定。
+- `Acceptance Worker` 负责 `Handoff -> Acceptance`，不直接重新派发任务。
 
 ## Definitions
 
@@ -74,6 +85,17 @@
 - outbox publish、event cursor 推进、reconcile 读取 authoritative state 必须共享一致的时序理解。
 - 首版最需要验证的是“状态提交后，事件被发布，reconcile 下一轮能看到正确输入”。
 - 若一开始拆为两个写进程，会把单 writer 语义打散。
+
+## Protocol Steps
+
+1. `Input Handler / Callback Handler` 提交 change-set 并写 wake signal。
+2. `Event Processor` 先处理 pending outbox，推进 event append 与 cursor。
+3. `Lease Monitor` 扫描 active run 和 lock lease。
+4. `Acceptance Worker` 处理 `awaiting_acceptance` backlog。
+5. `Recovery Worker` 处理 timeout、launch ambiguity、stale lock、replay anomaly。
+6. `Reconcile Worker` 基于最新 state + event cursor 做调度决策。
+7. `Checkpoint Writer` 在有实质变化时写 checkpoint。
+8. 若触发 reset，则写 `ContextResetRequested` 并结束当前上下文。
 
 ## Outbox Publisher Blueprint
 
@@ -156,6 +178,24 @@
 - `Acceptance` 产生新结果
 - `RecoveryAction` 完成或重要阶段切换
 
+## State / Schema
+
+```yaml
+runtime_blueprint_profile:
+  deployment_mode: single_process_single_writer
+  workers:
+    - event_processor
+    - lease_monitor
+    - acceptance_worker
+    - recovery_worker
+    - reconcile_worker
+    - checkpoint_writer
+  shared_constraints:
+    single_writer_gate: true
+    authoritative_write_path: changeset_applier
+    event_publish_path: outbox_then_event_log
+```
+
 ## Recommended Job Loop Order
 
 首版推荐固定顺序：
@@ -236,6 +276,18 @@ flowchart LR
     I2["Run Callback Handler"] --> G
     I3["Runtime Workers"] --> G
     G --> DB["SQLite ChangeSet Commit"]
+```
+
+### Runtime Responsibility Boundary
+
+```mermaid
+flowchart LR
+    EP["Event Processor"] --> EV["Event Log / Cursor"]
+    LM["Lease Monitor"] --> RCV["Recovery Worker"]
+    AW["Acceptance Worker"] --> ACC["Acceptance Result"]
+    RW["Reconcile Worker"] --> DISP["Dispatch / Planning Decisions"]
+    ADP["Executor Adapter"] --> LM
+    ADP --> AW
 ```
 
 ## Anti-patterns

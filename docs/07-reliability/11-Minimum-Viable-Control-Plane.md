@@ -28,7 +28,7 @@
 - basic acceptance engine
 - basic checkpointing
 - basic recovery reconciliation
-- manual Queen escalation
+- manual steering / escalation path
 
 ## MVP Excluded
 
@@ -48,7 +48,7 @@
 - 只能有一个 authoritative writer 更新 object state。
 - `rehydrate + reassign` 是唯一必须支持的恢复路径。
 - lock 粒度先支持 `path`，`repo` 与 `module` 只保留 schema 与语义。
-- Queen 不落为运行时组件，只保留人工升级路径。
+- `Steering / Escalation Authority` 不落为运行时组件，只保留人工升级路径。
 - Acceptance 先只支持 canonical evidence set，不做 executor-specific scoring。
 
 ### MVP Required Components

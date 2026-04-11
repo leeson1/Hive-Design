@@ -10,6 +10,7 @@
 
 - 本文覆盖首版必须具备的 4 个核心场景。
 - 本文只描述控制平面行为，不展开执行器内部实现细节。
+- 本文聚焦 Layer 1 / MVP 控制平面场景；vNext 的用户插话与 context reset 协议见 `14-Context-Reset-and-Session-Handoff-Protocol.md` 与 `15-User-Interrupt-Replan-and-Preemption-Protocol.md`。
 - 命令 contract 以 `../05-execution/11-Control-Plane-API-Contract.md` 为准。
 - handler ownership 以 `../05-execution/14-Command-Handler-Blueprint.md` 为准。
 

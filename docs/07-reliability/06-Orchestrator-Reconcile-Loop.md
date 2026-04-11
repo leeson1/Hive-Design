@@ -13,6 +13,8 @@
 - 组件拆分见 `../00-overview/02-Reference-Architecture.md`。
 - 一致性顺序见 `../06-coordination/02-Consistency-and-Transaction-Boundaries.md`。
 - 首版 worker 进程模型见 `./12-Reconcile-Worker-and-Event-Processor-Blueprint.md`。
+- context reset 规则见 `./09-Context-Reset-and-Session-Continuity.md`。
+- Requirement Ledger 见 `../04-planning/08-Requirement-Ledger-and-Coverage-Model.md`。
 
 ## Definitions
 
@@ -44,6 +46,7 @@
 - Orchestrator 必须短时运行并退出。
 - Orchestrator 的连续性来自外部状态，不来自长 context。
 - Orchestrator 不得跳过 guard checks 直接改状态。
+- 运行时用户输入必须先进入 `Directive`，不得直接改任务文件或 task 状态。
 
 ### Reconcile Order
 

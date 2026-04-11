@@ -11,6 +11,7 @@
 - 本文只覆盖首版 MVP command surface。
 - command 的输入 envelope 和语义仍以 `11-Control-Plane-API-Contract.md` 为准。
 - 对象字段最小集以 `../03-state-model/07-MVP-Object-Package.md` 为准。
+- vNext 角色拓扑与 `Run Contract` 标准模板见 `./15-Agent-Role-Topology-and-Run-Contract.md`。
 - 本文不规定 HTTP / gRPC / CLI 传输层，只规定 handler 语义和 change-set 落点。
 
 ## Definitions

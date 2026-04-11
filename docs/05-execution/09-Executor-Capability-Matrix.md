@@ -2,101 +2,135 @@
 
 ## Purpose
 
-- 将执行器适配契约进一步收敛为可比对的能力矩阵。
-- 明确 Claude Code 与 Codex 的已知能力、未知项和验证需求。
-- 约束 Scheduler 只能依赖“已确认能力”，不能依赖想象中的能力。
+- 比较 Claude Code 与 Codex 作为 Hive 外部执行器时，调度层真正关心的能力维度。
+- 把执行器选择收敛成协议选择矩阵，而不是产品宣传页。
+- 约束 Scheduler 与 Adapter 只能依赖被文档或实验验证过的能力。
 
 ## Scope
 
-- 本文是架构假设矩阵，不是产品宣传页。
-- 本文只记录当前可用公开资料与明确 unknown。
-- 具体验证计划见 `./12-Executor-Validation-Plan.md`。
+- 本文只定义 Hive 关心的能力维度和保守使用规则。
+- 本文不试图穷举厂商实现细节；未知项必须明确标记。
+- 具体验证方式见 `./12-Executor-Validation-Plan.md`。
+- Worker session continuity 与 bootstrap 见 `./10-Worker-Session-Bootstrap-Checklist.md`。
 
 ## Definitions
 
-- `Documented`：官方资料明确说明。
-- `Partial`：官方资料只覆盖部分语义。
-- `Unknown`：公开资料未明确说明。
-- `Validation Needed`：必须通过实验验证后才能被调度层依赖。
+- `Documented`：有足够文档证据支持调度层依赖。
+- `Partial`：能力存在，但语义不完整或边界不够硬。
+- `Unknown`：当前没有足够证据，不能作为硬依赖。
+- `Validation Needed`：必须通过 conformance / spike 验证后才能被关键路径依赖。
 
 ## Rules
 
 ### Capability Consumption Rule
 
-- Scheduler 只能把 `Documented` 能力当作硬能力。
-- `Partial` 只能作为软偏好，不得作为关键恢复路径前提。
-- `Unknown` 能力不得写进 hard dependency。
-- adapter 必须把 `Documented / Partial / Unknown` 连同证据来源暴露给调度层。
+1. Scheduler 只能把 `Documented` 能力当作硬依赖。
+2. `Partial` 只能作为软偏好，必须设计降级路径。
+3. `Unknown` 能力不得写进 recovery、session continuity 或 dispatch 核心路径。
+4. Adapter 必须向控制平面暴露能力画像，而不是让 Orchestrator 直接猜执行器特性。
 
-### Matrix Reading Rule
+### 调度层真正关心的维度
 
-- `supports_* = yes` 仅表示“文档证据足够支持调度层依赖”。
-- `partial` 表示“存在相关能力，但语义不完整”。
-- `unknown` 表示“不得依赖，需要实验验证”。
+- `restore_session`
+- `soft_cancel`
+- `hard_kill`
+- `sandbox`
+- `parallel_runs`
+- `tool_introspection`
+- `approval_model`
+- `heartbeat_model`
+- `artifact_collection`
+- `workspace_isolation`
 
-## Capability Matrix
+### 设计立场
 
-| Capability | Claude Code | Codex | 架构含义 |
-|---|---|---|---|
-| `supports_restore_run` | `unknown` | `partial`：文档显示跨 CLI / IDE / app 保持 session history 与 cloud task continuity，但 live run restore 语义不完整 | 恢复流程默认按“可重建上下文 + 重派”设计，不能依赖原 run 恢复 |
-| `supports_soft_cancel` | `unknown`：公开资料未给出统一 run 级 soft cancel 语义 | `unknown`：公开资料未给出统一 run 级 soft cancel 语义 | 调度层应优先设计 `finish_current_step`，并允许退化为 hard kill |
-| `supports_hard_kill` | `unknown` | `unknown` | kill 只能经 adapter 封装，失败时必须进入 recovery |
-| `supports_parallel_runs` | `partial`：subagents 文档明确并行子代理，但跨独立仓库 / 工作区并发依赖外部启动器 | `yes`：官方明确 app 支持 multiple agents in parallel | Scheduler 必须按 executor profile 判断并发上限 |
-| `supports_workspace_isolation` | `partial`：文档明确写权限受工作目录限制，但独立 worktree 不是通用默认语义 | `yes`：官方明确 app / cloud task 使用 isolated sandbox，app 支持 worktrees | 对 Claude Code 默认需要外部编排器提供隔离 |
-| `supports_tool_introspection` | `yes`：文档明确 tools / disallowedTools / MCP scoping | `partial`：Codex docs 明确 skills、MCP、web search、approval modes；细粒度 tool introspection 语义需验证 | adapter 需要把工具集标准化 |
-| `heartbeat source` | `unknown` | `unknown` | v1 必须由 host-side lease monitor 主导，不能依赖 executor 内建 heartbeat |
-| `approval / permission model` | `yes`：只读默认、显式批准、hooks allow/deny/ask documented | `yes`：三档 approval mode、workspace / network boundary documented | Scheduler 必须把权限模式映射为 policy fields |
-| `tool availability model` | `yes`：可通过 tools / MCP / subagent scope 控制 | `partial`：skills、MCP、web search documented，但不同 surface 差异需验证 | adapter 应暴露运行前可用工具清单与动态限制 |
-| `artifact collection model` | `partial`：GitHub Actions / runner 产物可用，但统一 artifact contract 未见完整官方语义 | `yes`：官方明确任务附带 citations、terminal logs、test results，cloud 可附截图 | Hive 仍需统一 artifact refs，不直接依赖原生格式 |
-| `log collection model` | `partial`：CI runner logs 明确，交互式 CLI 原始日志 API 语义未明 | `yes`：官方明确 terminal logs with each task | Log Store 仍需 adapter 标准化 |
-| `resume semantics` | `partial`：persistent memory / session continuity 存在线索，但 run fidelity unknown | `partial`：session history continuity documented，cloud task reopen documented | 只能当“上下文连续性”，不能当“执行实例恢复” |
-| `failure surface` | `documented`：permission denial、sandbox boundary、tool restrictions、runner / API failures | `documented`：approval denial、sandbox / network restriction、environment setup failure、cloud / local mode mismatch | Recovery policy 必须把失败面分类归一化 |
-| `known unknowns` | 高：restore、heartbeat、kill fidelity、workspace isolation depth | 中高：restore fidelity、soft cancel semantics、tool introspection granularity | 这些项必须先实验验证再写成 hard dependency |
+- 这些维度服务于调度决策、恢复设计和风险评估。
+- 它们不是“哪个产品更强”的宣传项。
+- 多执行器是 Hive 的设计方向，但其价值要靠 capability contract 和后续实验验证，而不是先验成立。
 
-## Normalized Profile Recommendation
+## Protocol Steps
+
+1. Adapter 暴露 normalized capability profile。
+2. Scheduler 在 `prepare_dispatch` 前读取 capability profile。
+3. 若某项能力仅为 `Partial / Unknown`，调度层必须选择保守路径。
+4. `Validation Needed` 的能力只能在实验或 conformance 通过后提升为硬依赖。
+5. capability 变化必须能回写到 executor profile，而不是散落在 prompt 假设中。
+
+## State / Schema
 
 ```yaml
-executor_name: claude_code
-evidence_basis:
-  supports_parallel_runs: documented_partial
-  supports_workspace_isolation: documented_partial
-  heartbeat_source: unknown
-unsafe_to_assume:
-  - restore_run_fidelity
-  - hard_kill_fidelity
-  - built_in_heartbeat
+executor_capability_profile:
+  executor_name: codex
+  restore_session: partial
+  soft_cancel: unknown
+  hard_kill: unknown
+  sandbox: documented
+  parallel_runs: documented
+  tool_introspection: partial
+  approval_model: documented
+  heartbeat_model: unknown
+  artifact_collection: documented
+  workspace_isolation: documented
+  validation_needed:
+    - hard_kill_fidelity
+    - live_run_restore_fidelity
 ```
 
 ## Mermaid Diagram
 
-### Capability Consumption Rule
+### Capability 消费规则
 
 ```mermaid
 flowchart TD
-    A["Capability Matrix"] --> B{"Documented?"}
-    B -- Yes --> C["May be used as hard scheduling dependency"]
+    A["Executor Capability Profile"] --> B{"Documented?"}
+    B -- Yes --> C["可作为硬调度依赖"]
     B -- No --> D{"Partial?"}
-    D -- Yes --> E["Only soft preference / guarded path"]
-    D -- No --> F["Unknown -> Validation Needed"]
+    D -- Yes --> E["只能作软偏好 + 必须有降级路径"]
+    D -- No --> F["Unknown -> Validation Needed -> 不得依赖"]
 ```
 
-## Sources Baseline
+## Capability Matrix
 
-- Claude Code Security: <https://docs.anthropic.com/s/claude-code-security>
-- Claude Code Subagents: <https://docs.anthropic.com/en/docs/claude-code/sub-agents>
-- Claude Code GitHub Actions: <https://docs.anthropic.com/en/docs/claude-code/github-actions>
-- Introducing the Codex app: <https://openai.com/index/introducing-the-codex-app/>
-- Introducing upgrades to Codex: <https://openai.com/index/introducing-upgrades-to-codex/>
+| 维度 | Claude Code | Codex | Hive 设计含义 |
+|---|---|---|---|
+| `restore_session` | `partial` | `partial` | 只能依赖“可重建上下文”，不能依赖 live run fidelity |
+| `soft_cancel` | `unknown` | `unknown` | 取消策略必须允许退化为 `finish_current_step` 或 recovery |
+| `hard_kill` | `unknown` | `unknown` | kill 必须经 adapter 封装，失败时进入 recovery |
+| `sandbox` | `documented` | `documented` | 权限与副作用边界必须进入 executor profile |
+| `parallel_runs` | `partial` | `documented` | 并发能力必须被 capability gate 限制，不得默认无限并发 |
+| `tool_introspection` | `documented` | `partial` | Hive 需要在 launch 前知道工具与权限边界 |
+| `approval_model` | `documented` | `documented` | approval 差异必须映射成 policy fields |
+| `heartbeat_model` | `unknown` | `unknown` | 首版必须由 host-side lease monitor 兜底 |
+| `artifact_collection` | `partial` | `documented` | artifact refs 必须统一成 Hive 自己的 contract |
+| `workspace_isolation` | `partial` | `documented` | 对隔离不硬的执行器，必须由 Hive 提供外部工作区策略 |
+
+## Design Notes
+
+### 选择建议
+
+- 首版执行器选择时，应优先选择：
+  - sandbox 语义清晰
+  - workspace isolation 可控
+  - artifact collection 可稳定归一
+- 对 `restore_session`、`soft_cancel`、`hard_kill`、`heartbeat_model`，首版都不应写成硬依赖。
+
+### 对调度与恢复的直接影响
+
+- `restore_session != 可恢复执行实例`
+- `parallel_runs != 必然允许多任务并行派发`
+- `artifact_collection` 再强，也不等于 `Handoff`、`Acceptance` 可以省略
+- `approval_model` 和 `sandbox` 必须进入 task dispatch policy，否则执行结果不可预测
 
 ## Anti-patterns
 
-- 把 `unknown` 能力写进恢复核心路径。
-- 用单一 executor profile 假设 Claude Code 与 Codex 行为一致。
-- 将“产品体验上可继续”误当成“run 级 restore 已有硬保证”。
-- 把并行能力当成必然更优，而不结合 lock / conflict policy。
+- 把厂商体验描述直接当成 Hive 的协议保证。
+- 用 `unknown` 能力设计核心恢复路径。
+- 只因为“支持并行”就默认多 worker 更优。
+- 忽略 workspace isolation 差异，导致路径锁和执行隔离失真。
 
 ## Acceptance Criteria
 
-- 读者能明确区分已知能力、部分能力和未知能力。
-- Scheduler 可以据此做保守派发，而不是过度依赖 executor 魔法。
-- 未知项都明确标记了 `Validation Needed`。
+- 读者能明确知道 Hive 在选择执行器时真正关心哪些能力维度。
+- Claude Code 与 Codex 的能力差异被表达为协议矩阵，而不是宣传比较。
+- `Partial / Unknown` 项都明确不能被当作硬依赖。
+- Scheduler 与 Adapter 的职责边界清楚：一个消费能力画像，一个暴露能力画像。
