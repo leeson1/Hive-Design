@@ -616,5 +616,6 @@ ChangeSet:
 - [x] 已为每个对象明确 MVP required fields、deferred fields、存储建议和引用完整性要求。
 - [x] 已给出对象依赖表、authoritative vs derived 分类表和 required-only schema 样例。
 - [x] 已明确哪些对象在首版只保留为嵌套字段或引用，不作为一等对象建表。
-- [ ] 仍需后续 ADR / spike 验证：JSON 列细分策略、referential integrity 在 SQLite 中的具体实现方式、artifact ref URI 规范。
+- [x] `artifact ref URI` 规范已由 `../06-coordination/05-Compiled-Artifact-and-Compilation-Transaction-Boundaries.md` 收口。
+- [ ] 实现层仍需确定：JSON 列细分策略、referential integrity 在 SQLite 中的具体实现方式。
 - [x] 已明确不进入首版实现：Research Sprint、Evidence Pack、Decision、Artifact 一等对象化；其 vNext durable compiled artifact 形态另见 `08-vNext-Compiled-Artifact-Package.md`。

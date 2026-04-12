@@ -77,6 +77,7 @@
 13. `06-coordination/05-Compiled-Artifact-and-Compilation-Transaction-Boundaries.md`
 14. `05-execution/17-Codex-First-Adapter-Fallback-Profile.md`
 15. `04-planning/13-vNext-Minimum-Implementation-Slices-and-Phase-Plan.md`
+16. `05-execution/12-Executor-Validation-Plan.md`
 
 ### 第三遍：按专题补细节
 
@@ -216,10 +217,30 @@ docs/
 ### 仍留给后续实现与验证的内容
 
 - 把 `Product Spec / Execution Package / Task Graph / Run Contract / Session Scaffold / Dossier` 从设计协议落到实现仓 schema、compiler、validator 和 storage metadata。
-- 验证 `restore_run`、`soft_cancel`、`hard_kill fidelity`、heartbeat observability 等 executor 能力，决定哪些能从 best-effort 升级为调度层依赖。
+- remaining experiments 已统一收口到 `05-execution/12-Executor-Validation-Plan.md`，包括 callback fidelity、delayed exit event handling、restore fidelity、soft cancel fidelity、hard kill fidelity、heartbeat observability、operator command transport form。
 - 为 compiled artifacts 补模板生成器、read model 和最小测试夹具，但不改变 truth hierarchy。
 - 已补实现前 ADR / spike 收口：artifact ref URI 规范、metadata row 与 payload root 的目录布局、编译批次与 change-set 的事务边界。
-- 仍需通过真实 adapter 实验验证 callback fidelity、restore fidelity、soft cancel / hard kill fidelity、heartbeat observability，再决定是否升级为 hard dependency。
+
+### 设计完成状态
+
+- 本仓库在“设计完成”的意义上，已经完成：
+  - truth hierarchy 收敛
+  - MVP object / command / handler / recovery 主线收敛
+  - vNext compiled artifact durable shape 与 transaction boundary 收敛
+  - Codex first adapter fallback baseline 收敛
+  - 最小实现切片、阶段计划、测试门收敛
+- 本仓库在“工程完成”的意义上，还未完成：
+  - 尚未进入实现仓落地 schema、handler、adapter、fixture 与 conformance tests
+  - 尚未完成真实 adapter experiments
+
+### 下一步动作
+
+- 下一步应进入实现仓，而不是继续撰写新的概念文档。
+- 实现仓优先顺序：
+  1. 落地 `Phase 1` schema / commands / handlers / compile pipeline
+  2. 建立 fake adapter 与 e2e fixtures
+  3. 执行 `05-execution/12-Executor-Validation-Plan.md` 中的真实 adapter experiments
+  4. 仅在实验结果要求时，回写 capability matrix 与 fallback 边界
 
 ### 明确不进入当前阶段的内容
 

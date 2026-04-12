@@ -32,8 +32,9 @@
 | 分层 | 当前状态 | 说明 |
 |---|---|---|
 | 架构主线 | 已收敛，可实现 | 输入到 spec、task graph、run contract、handoff、reset、preemption 主线已完整 |
-| 编译产物落盘与事务边界 | 之前偏协议层，本轮收口为可实现 | 需补 metadata row、payload root、artifact ref URI、目录布局、compilation batch change-set 边界 |
-| adapter 能力降级与第一阶段实施包 | 之前偏协议层，本轮收口为可实现 | 需补 Codex first fallback 和最小切片、命令、测试门、验收标准 |
+| 编译产物落盘与事务边界 | 已收口，可实现 | metadata row、payload root、artifact ref URI、目录布局、compilation batch change-set 边界已明确 |
+| adapter 能力降级与第一阶段实施包 | 已收口，可实现 | Codex first fallback、最小切片、命令、测试门、验收标准已明确 |
+| 真实环境能力验证 | 仍待实验 | callback、delayed exit、restore、soft cancel、hard kill、heartbeat、operator transport 需真实验证 |
 
 ### 已经足够实现的部分
 
@@ -51,25 +52,30 @@
    - 首适配器选 `Codex` 已收敛。
    - `restore_run` 非硬依赖已收敛。
 
-### 之前仍停留在协议层、现已要求补齐的部分
+### 已由新文档解决并完成同步的部分
 
-以下主题在原文档里只有原则，缺少实现级约束：
+以下主题已不再属于 open design gap：
 
 1. `compiled artifact durable shape`
-   - 缺少统一 metadata row 字段收口。
-   - 缺少 payload root、artifact ref URI、目录布局规范。
-   - 缺少小 payload 内嵌与大 payload 文件化的判定。
+   - 已由 `../06-coordination/05-*` 与 `../08-appendix/15-*` 收口。
 2. `compilation batch transaction boundary`
-   - 缺少 compilation batch、artifact metadata row、pointer switch、outbox 之间的 change-set 规则。
-   - 缺少 payload write 和 metadata commit 的先后顺序。
-   - 缺少 compile failure / partial compile 的补偿 marker 约束。
+   - 已由 `../06-coordination/05-*` 收口。
 3. `Codex host-side fallback`
-   - 缺少 callback vs poll 的最小依赖模式。
-   - 缺少 heartbeat、restore、soft_cancel、hard_kill 的保守降级路径。
-   - 缺少 liveness ambiguity 时 host-side hold / reassign 规则细节。
+   - 已由 `../05-execution/17-*` 收口。
 4. `minimum implementation slice`
-   - 缺少首批必须落地的对象、命令、测试门、验收标准的明确切片。
-   - 缺少阶段化交付定义，导致团队容易继续抽象讨论。
+   - 已由 `../04-planning/13-*` 收口。
+
+### 仍不能靠纯设计关闭的部分
+
+以下问题不再继续抽象讨论，而是统一进入 experiment backlog：
+
+1. callback fidelity
+2. delayed exit event handling
+3. restore fidelity
+4. soft cancel fidelity
+5. hard kill fidelity
+6. heartbeat observability
+7. operator command transport form
 
 ### 现在仍然故意不进入实现包的部分
 
@@ -84,7 +90,7 @@
 
 ### 本轮实现前设计包的构成
 
-本轮之后，工程实现应以以下文档组合作为直接输入：
+设计收口后，工程实现应以以下文档组合作为直接输入：
 
 1. `03-state-model/08-vNext-Compiled-Artifact-Package.md`
 2. `04-planning/12-Compilation-Lifecycle-and-Freshness-Protocol.md`
@@ -92,6 +98,15 @@
 4. `05-execution/17-Codex-First-Adapter-Fallback-Profile.md`
 5. `04-planning/13-vNext-Minimum-Implementation-Slices-and-Phase-Plan.md`
 6. `08-appendix/15-vNext-Compiled-Artifact-Schema-Catalog.md`
+7. `05-execution/12-Executor-Validation-Plan.md`
+
+### 设计完成判定
+
+当前设计仓应视为“设计完成，进入实现移交”而不是“继续扩概念”，其判定标准是：
+
+1. 主协议、truth hierarchy、artifact durable shape、transaction boundary、fallback baseline、最小实现切片已经明确。
+2. remaining open items 已全部被压缩为 experiment backlog。
+3. 下一步的主要产出应是实现仓 schema、handler、adapter、fixture 与实验结果，而不是新的架构层。
 
 ## Protocol Steps
 
@@ -111,7 +126,8 @@
    - `07-reliability/16`
 4. 对第一阶段排期与验收，先读：
    - `04-planning/13`
-5. 若新设计提议触碰 truth hierarchy 或引入排除项，必须先拒绝并回到本文边界。
+5. 对 remaining open items，直接进入 `05-execution/12-Executor-Validation-Plan.md` 设计实验，不再继续抽象讨论。
+6. 若新设计提议触碰 truth hierarchy 或引入排除项，必须先拒绝并回到本文边界。
 
 ## Acceptance Criteria
 

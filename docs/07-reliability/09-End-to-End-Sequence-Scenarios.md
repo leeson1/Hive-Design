@@ -378,5 +378,5 @@ sequenceDiagram
 - [x] 已覆盖 dispatch 无确认、run 超时、acceptance rejected 三类 failure path。
 - [x] 每个场景都包含初始状态、关键 command、emitted events、对象状态变化、最终收敛状态和安全性说明。
 - [x] 每个场景都附带 mermaid sequence diagram，可直接转成 e2e 用例。
-- [ ] 仍需后续 ADR / spike 验证：真实 adapter 的 callback 时序、迟到 exit event 的处理细节。
+- [x] 真实 adapter 的 callback 时序、迟到 exit event 处理，已统一收口到 `../05-execution/12-Executor-Validation-Plan.md` experiment backlog。
 - [ ] 明确不进入首版实现：跨仓恢复、跨 writer 事件竞争、复杂人工审批流。

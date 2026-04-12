@@ -193,5 +193,5 @@ flowchart TD
 - [x] 已给出 command -> handler -> state mutation -> event emission 对照表。
 - [x] 已明确哪些 command 必须在同一 change-set 内完成。
 - [x] 已明确 `launch_run` 只能产生 side effect token，不能直接改最终运行状态。
-- [ ] 仍需后续 ADR / spike 验证：operator commands 的 transport 形式、adapter callback vs poll 的统一封装。
+- [x] operator commands 的 transport 形式、adapter callback vs poll 的统一封装，已统一收口到 `12-Executor-Validation-Plan.md` experiment backlog。
 - [ ] 明确不进入首版实现：多 adapter 路由命令、策略引擎命令、复杂人工审批命令。

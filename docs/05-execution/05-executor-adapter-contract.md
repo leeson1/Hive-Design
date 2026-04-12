@@ -11,6 +11,7 @@
 - 本文定义抽象契约，不定义某个执行器的具体实现。
 - 执行器是外部可替换组件，不是 Hive 内核。
 - 具体能力对比见 `09-Executor-Capability-Matrix.md`。
+- remaining experiments 见 `12-Executor-Validation-Plan.md`。
 - Worker 启动时的状态定向见 `10-Worker-Session-Bootstrap-Checklist.md`。
 
 ## Definitions
@@ -89,19 +90,24 @@
 5. 结束后调用 `collect_logs(...)` 与 `collect_artifacts(...)`。
 6. 将执行器原生状态映射为 Hive 标准状态。
 
+补充规则：
+
+- 在 restore fidelity 未经实验验证前，步骤 3 的默认恢复路径应视为 `launch_run(...)` 配合 `rehydrate + reassign`。
+- `restore_run(...)` 在首版只应作为 best-effort probe，而不是默认恢复主路径。
+
 ## State / Schema
 
 ```yaml
 executor_name: codex
 capability_profile:
-  supports_restore_run: true
-  supports_soft_cancel: true
-  supports_hard_kill: true
+  supports_restore_run: false
+  supports_soft_cancel: false
+  supports_hard_kill: false
   supports_worktree: true
   supports_sandbox: true
-  supports_tool_introspection: true
+  supports_tool_introspection: false
   supports_parallel_runs: true
-  heartbeat_model: adapter_reported
+  heartbeat_model: host_observed
   approval_model: tool_or_policy_gated
   tool_availability_model: dynamic
 normalized_exit_status_map:
@@ -132,6 +138,7 @@ flowchart TD
 - 用单一 prompt 假设所有执行器行为一致。
 - 直接把原生退出码当 Hive 任务状态。
 - 适配器不暴露能力边界，导致调度层盲调度。
+- 在未做真实实验前，把 `restore_run / soft_cancel / hard_kill / adapter heartbeat` 写成 hard dependency。
 
 ## Acceptance Criteria
 

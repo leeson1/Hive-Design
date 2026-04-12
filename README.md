@@ -19,6 +19,12 @@ Hive 是一个面向外部执行器的控制平面设计仓。它当前同时承
 - `launch_run` 只能写 side effect token / launch markers，不能伪造最终成功状态。
 - Orchestrator 必须是事件驱动、非常驻、可退出、可从外部状态重建。
 
+当前它已经基本完成“设计仓”使命：
+
+- 直接可实现的部分已经收口为实现前设计包；
+- 不能靠纯设计关闭的部分，已经统一收口为真实 adapter experiment backlog；
+- 下一步应进入实现仓落地，而不是继续扩写新概念文档。
+
 ## 现在是什么
 
 当前仓库最接近实现的是第 1 层：`MVP control plane`。它回答：
