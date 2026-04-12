@@ -126,8 +126,48 @@
 - recovery reconciliation 必须先读 object state，再对照 checkpoint。
 - checkpoint 可以导出为文件，但导出文件不是当前事实。
 
+## ADR-0007：Compiled Artifact 必须采用 Metadata Row + Payload Root
+
+### Context
+
+- vNext 需要把 `Evidence Pack / Product Spec / Task Graph / Run Contract / Session Scaffold` durable 化。
+- 仅有协议层 schema 还不足以实现 freshness、pointer switch、supersession 与审计。
+- 若只写 payload 文件，无法稳定索引与事务化切换 active pointer。
+
+### Decision
+
+- compiled artifact 一律采用 `metadata row + payload root` 分离模型。
+- metadata row 存 SQLite，payload 存 filesystem。
+- artifact 引用统一采用 `artifact://<artifact_type>/<artifact_id>[#entry]`。
+
+### Consequences
+
+- active pointer 可以稳定指向 artifact，而不需要把正文嵌进 runtime object。
+- payload durable、pointer switch、supersession 可以拆成显式 change-set。
+- dossier、scaffold、artifact 仍保持 derived state 身份。
+
+## ADR-0008：Compilation Activation 必须晚于 Payload Durable
+
+### Context
+
+- compilation batch 与 runtime pointer 更新都属于 single-writer 控制面写路径。
+- payload 在 filesystem，pointer 在 SQLite，天然不共享单事务。
+- 若先切 pointer 再落 payload，会产生悬空 active ref。
+
+### Decision
+
+- 编译必须拆成 `prepare` 与 `activate` 两个边界。
+- 只有在 payload durable 后，才允许 activate change-set 切换 pointer。
+- supersession mapping 与 pointer switch 必须在同一 activate change-set 内完成。
+
+### Consequences
+
+- 实现层需要显式处理 `compiled_pending_activation` 状态。
+- recovery 可以重试 activation，而不是误把半成品当 canonical output。
+- compile failure / partial compile 不会污染 active runtime 引用。
+
 ## Acceptance Criteria
 
 - 读者能明确看到每个关键实现选择的 context、decision、consequences。
-- MVP 的 storage、executor、single writer、live restore、path lock、checkpoint 取舍已不再悬空。
+- MVP 的 storage、executor、single writer、live restore、path lock、checkpoint、artifact durable 边界取舍已不再悬空。
 - 后续若变化，可以在此基础上继续演进而不是重新口头讨论。

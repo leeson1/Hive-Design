@@ -29,7 +29,7 @@
 | 层级 | 目标 | 当前状态 | 典型文档 |
 |---|---|---|---|
 | Layer 1 | 收敛第一个可实现的 Hive 控制平面 | 已收敛为实现前设计包 | `00-overview/03`、`03-state-model/07`、`05-execution/11`、`05-execution/14` |
-| Layer 2 | 定义长期自治多-agent harness 的目标架构 | 主协议已收敛，进入实现前收口 | `00-overview/05`、`03-state-model/08`、`04-planning/09`、`04-planning/10`、`04-planning/11`、`04-planning/12`、`05-execution/15`、`05-execution/16`、`07-reliability/14`、`07-reliability/15`、`07-reliability/16` |
+| Layer 2 | 定义长期自治多-agent harness 的目标架构 | 主协议已收敛，进入实现前收口 | `00-overview/05`、`00-overview/06`、`03-state-model/08`、`04-planning/09`、`04-planning/10`、`04-planning/11`、`04-planning/12`、`04-planning/13`、`05-execution/15`、`05-execution/16`、`05-execution/17`、`06-coordination/05`、`07-reliability/14`、`07-reliability/15`、`07-reliability/16` |
 | Layer 3 | 明确不在当前阶段扩展的方向 | 明确排除 | multi-writer、multi-repo、复杂 policy engine、rich UI、完整人工审批 |
 
 ### 总体边界
@@ -73,6 +73,10 @@
 9. `07-reliability/14-Context-Reset-and-Session-Handoff-Protocol.md`
 10. `07-reliability/15-User-Interrupt-Replan-and-Preemption-Protocol.md`
 11. `07-reliability/16-Run-Termination-and-Reassignment-Matrix.md`
+12. `00-overview/06-vNext-Implementation-Gap-Analysis.md`
+13. `06-coordination/05-Compiled-Artifact-and-Compilation-Transaction-Boundaries.md`
+14. `05-execution/17-Codex-First-Adapter-Fallback-Profile.md`
+15. `04-planning/13-vNext-Minimum-Implementation-Slices-and-Phase-Plan.md`
 
 ### 第三遍：按专题补细节
 
@@ -99,6 +103,7 @@ docs/
 │   ├── 03-MVP-Implementation-Blueprint.md
 │   ├── 04-Phased-Implementation-Plan.md
 │   ├── 05-Hive-vNext-Long-Running-Agent-Harness.md
+│   ├── 06-vNext-Implementation-Gap-Analysis.md
 │   ├── design-principles.md
 │   └── engineering-laws.md
 ├── 01-foundation/
@@ -131,7 +136,8 @@ docs/
 │   ├── 09-Input-to-Spec-and-TaskGraph-Pipeline.md
 │   ├── 10-Benchmark-Repo-Research-Protocol.md
 │   ├── 11-Project-Dossier-Compilation-Protocol.md
-│   └── 12-Compilation-Lifecycle-and-Freshness-Protocol.md
+│   ├── 12-Compilation-Lifecycle-and-Freshness-Protocol.md
+│   └── 13-vNext-Minimum-Implementation-Slices-and-Phase-Plan.md
 ├── 05-execution/
 │   ├── 00-Agent-Session-Protocol.md
 │   ├── 01-任务准入规则.md
@@ -150,12 +156,14 @@ docs/
 │   ├── 13-First-Executor-Profile.md
 │   ├── 14-Command-Handler-Blueprint.md
 │   ├── 15-Agent-Role-Topology-and-Run-Contract.md
-│   └── 16-Executor-Session-Scaffold-Profile.md
+│   ├── 16-Executor-Session-Scaffold-Profile.md
+│   └── 17-Codex-First-Adapter-Fallback-Profile.md
 ├── 06-coordination/
 │   ├── 01-文件系统协同规则.md
 │   ├── 02-Consistency-and-Transaction-Boundaries.md
 │   ├── 03-Change-Set-and-Outbox-Contract.md
-│   └── 04-MVP-Storage-Backend-Profile.md
+│   ├── 04-MVP-Storage-Backend-Profile.md
+│   └── 05-Compiled-Artifact-and-Compilation-Transaction-Boundaries.md
 ├── 07-reliability/
 │   ├── 01-Checkpoint-与恢复机制.md
 │   ├── 02-Evaluation-Gates.md
@@ -210,7 +218,8 @@ docs/
 - 把 `Product Spec / Execution Package / Task Graph / Run Contract / Session Scaffold / Dossier` 从设计协议落到实现仓 schema、compiler、validator 和 storage metadata。
 - 验证 `restore_run`、`soft_cancel`、`hard_kill fidelity`、heartbeat observability 等 executor 能力，决定哪些能从 best-effort 升级为调度层依赖。
 - 为 compiled artifacts 补模板生成器、read model 和最小测试夹具，但不改变 truth hierarchy。
-- 补实现前 ADR / spike：artifact ref URI 规范、metadata row 与 payload root 的目录布局、编译批次与 change-set 的事务边界。
+- 已补实现前 ADR / spike 收口：artifact ref URI 规范、metadata row 与 payload root 的目录布局、编译批次与 change-set 的事务边界。
+- 仍需通过真实 adapter 实验验证 callback fidelity、restore fidelity、soft cancel / hard kill fidelity、heartbeat observability，再决定是否升级为 hard dependency。
 
 ### 明确不进入当前阶段的内容
 

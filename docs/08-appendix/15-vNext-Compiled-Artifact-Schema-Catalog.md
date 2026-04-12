@@ -11,6 +11,57 @@
 - 本文只覆盖 compiled artifact metadata 和典型 payload linkage，不是最终 DDL。
 - MVP core runtime objects 仍以 `11-Schema-Catalog.md` 为准。
 - artifact package 语义见 `../03-state-model/08-vNext-Compiled-Artifact-Package.md`。
+- durable layout 与 compilation transaction boundary 见 `../06-coordination/05-Compiled-Artifact-and-Compilation-Transaction-Boundaries.md`。
+
+## Shared Metadata Row
+
+```yaml
+CompiledArtifactMetadata:
+  id_field: artifact_id
+  required:
+    artifact_id: string
+    artifact_type: string
+    status: string
+    compilation_batch_id: string
+    compiled_at: datetime
+    compiled_from_refs: array
+    payload_root_uri: string
+    payload_entry_uri: string
+    payload_format: string
+    payload_digest: string
+    canonical_pointer_scope: string
+    is_embedded_payload: boolean
+  optional:
+    directive_id: string
+    plan_revision_id: string
+    dispatch_intent_id: string
+    checkpoint_id: string
+    payload_inline_json: object
+    payload_bytes: integer
+    superseded_by_ref: string
+    activation_changeset_id: string
+  enums:
+    status: [compiled_pending_activation, compiled, active, superseded, stale, failed, archived, partial]
+    canonical_pointer_scope: [directive, plan_revision, dispatch_intent, checkpoint_summary]
+```
+
+## Artifact Ref URI and Layout
+
+```yaml
+ArtifactRefURI:
+  format:
+    root: artifact://<artifact_type>/<artifact_id>
+    entry: artifact://<artifact_type>/<artifact_id>#<entry_relpath>
+
+ArtifactPayloadLayout:
+  root_dir: artifacts/compiled/<artifact_type>/<artifact_id>/
+  required_entries:
+    - metadata.snapshot.json
+    - manifest.json
+  default_entry_by_type:
+    structured: artifact.yaml
+    markdown: artifact.md
+```
 
 ## Artifact Status Enum
 
@@ -34,8 +85,11 @@ CompilationBatch:
     input_refs: array
     output_refs: array
     failure_reason: string
+    prepare_changeset_id: string
+    activate_changeset_id: string
+    pending_pointer_updates: array
   enums:
-    status: [compiled, partial, failed, archived]
+    status: [preparing, compiled, partial, failed, archived]
 ```
 
 ## ResearchSprintArtifact
@@ -253,14 +307,36 @@ DirectiveExtension:
     research_artifact_refs: array
 ```
 
+## Canonical Activation Notes
+
+```yaml
+CanonicalActivationRule:
+  rules:
+    - metadata row may exist before pointer activation
+    - payload must be durable before activate_changeset commits
+    - supersession mapping and pointer switch must be in the same activate_changeset
+    - failed or partial artifacts must not be pointed to by active pointers
+```
+
 ## Anti-patterns
 
 - 把 compiled artifacts 的完整正文强塞进 core runtime object 表，导致对象边界膨胀。
 - 没有 `compilation_batch_id`，无法追踪哪轮编译生成了哪些 outputs。
 - 给 artifact schema 定义一堆 runtime state 字段，和 authoritative object tables 混层。
+- 缺少 `payload_root_uri`、`payload_entry_uri`、`payload_digest`，导致 artifact 无法稳定引用和审计。
+- 允许 pointer 指向 `failed`、`partial` 或未 durable payload 的 artifact。
+
+## Protocol Steps
+
+1. 为每个 compiled artifact 先创建 `CompiledArtifactMetadata`。
+2. 按 `ArtifactPayloadLayout` 生成 payload root 与默认 entry。
+3. 将具体 artifact schema 与 shared metadata row 组合成实现表结构。
+4. 只在 payload durable 后允许 activate pointer。
+5. 若 artifact 被 supersede，保留 metadata row 与 payload，不原地覆盖。
 
 ## Acceptance Criteria
 
 - 实现方能根据本文为 compiled artifacts 建立 validator 和 metadata storage。
 - 读者能区分 runtime objects schema 与 compiled artifact schema。
 - pointer carrier 扩展与 artifact schema 之间的关系明确。
+- metadata row、payload root、artifact ref URI、activation 约束都已覆盖。
