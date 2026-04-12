@@ -617,5 +617,5 @@ ChangeSet:
 - [x] 已给出对象依赖表、authoritative vs derived 分类表和 required-only schema 样例。
 - [x] 已明确哪些对象在首版只保留为嵌套字段或引用，不作为一等对象建表。
 - [x] `artifact ref URI` 规范已由 `../06-coordination/05-Compiled-Artifact-and-Compilation-Transaction-Boundaries.md` 收口。
-- [ ] 实现层仍需确定：JSON 列细分策略、referential integrity 在 SQLite 中的具体实现方式。
+- [x] `JSON 列细分策略`、`SQLite referential integrity` 的详细做法不再作为设计仓 open gap；它们属于 Hive 实现仓启动时决定的实现细节。
 - [x] 已明确不进入首版实现：Research Sprint、Evidence Pack、Decision、Artifact 一等对象化；其 vNext durable compiled artifact 形态另见 `08-vNext-Compiled-Artifact-Package.md`。

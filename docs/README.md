@@ -4,7 +4,7 @@
 
 - 说明本仓库当前承载的两层设计：`MVP implementation package` 与 `vNext long-running autonomous harness`。
 - 给出推荐阅读顺序、目录地图和分层边界。
-- 明确哪些内容已经收敛、哪些是下一阶段目标、哪些明确不进入当前阶段。
+- 明确哪些内容已经收敛、哪些明确转入实现仓、哪些明确不进入当前阶段。
 
 ## Scope
 
@@ -29,7 +29,7 @@
 | 层级 | 目标 | 当前状态 | 典型文档 |
 |---|---|---|---|
 | Layer 1 | 收敛第一个可实现的 Hive 控制平面 | 已收敛为实现前设计包 | `00-overview/03`、`03-state-model/07`、`05-execution/11`、`05-execution/14` |
-| Layer 2 | 定义长期自治多-agent harness 的目标架构 | 主协议已收敛，进入实现前收口 | `00-overview/05`、`00-overview/06`、`03-state-model/08`、`04-planning/09`、`04-planning/10`、`04-planning/11`、`04-planning/12`、`04-planning/13`、`05-execution/15`、`05-execution/16`、`05-execution/17`、`06-coordination/05`、`07-reliability/14`、`07-reliability/15`、`07-reliability/16` |
+| Layer 2 | 定义长期自治多-agent harness 的目标架构 | 设计仓收口完成，后续主要进入实现仓与真实 adapter 实验 | `00-overview/05`、`00-overview/06`、`03-state-model/08`、`04-planning/09`、`04-planning/10`、`04-planning/11`、`04-planning/12`、`04-planning/13`、`05-execution/12`、`05-execution/15`、`05-execution/16`、`05-execution/17`、`06-coordination/05`、`07-reliability/14`、`07-reliability/15`、`07-reliability/16` |
 | Layer 3 | 明确不在当前阶段扩展的方向 | 明确排除 | multi-writer、multi-repo、复杂 policy engine、rich UI、完整人工审批 |
 
 ### 总体边界
@@ -213,6 +213,7 @@ docs/
 - acceptance 独立于 worker 自报完成。
 - `launch_run` 只能写 launch markers / side effect token。
 - MVP 仍维持单仓库、单 writer、单 active plan revision、单 adapter profile、`SQLite + filesystem`。
+- Hive-Design 作为设计仓已完成收口，后续主要工作转入 Hive 实现仓。
 
 ### 仍留给后续实现与验证的内容
 
@@ -241,6 +242,12 @@ docs/
   2. 建立 fake adapter 与 e2e fixtures
   3. 执行 `05-execution/12-Executor-Validation-Plan.md` 中的真实 adapter experiments
   4. 仅在实验结果要求时，回写 capability matrix 与 fallback 边界
+
+### 封箱口径
+
+- Hive-Design 现在应按“设计仓已完成、进入实现移交”理解，而不是继续作为概念扩写仓。
+- canonical 实验 backlog 只有 `05-execution/12-Executor-Validation-Plan.md` 一处。
+- 未在该 backlog 中的问题，默认不再视为设计仓 open gap。
 
 ### 明确不进入当前阶段的内容
 
